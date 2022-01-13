@@ -30,7 +30,7 @@ contract Vesting is Ownable {
   mapping (address => uint256) public releasedAmount;
 
   uint256 released;
-  uint256 private BP = 1000000;
+  uint256 private BP = 1e18;
 
   address[] public beneficiaries;
 
@@ -129,11 +129,11 @@ contract Vesting is Ownable {
     uint256 percentage = (tokenAmounts[_beneficiary] * BP) / unlockedSupply();
     uint256 daysPassed = (block.timestamp - lockupTime) / 1 days;
 
-    uint256 claimablePercent = daysPassed * percentage / BP;
+    uint256 claimablePercent = daysPassed * percentage;
 
-    if(claimablePercent > 1) claimablePercent = 1; 
+    if(claimablePercent > BP) claimablePercent = BP; 
 
-    return tokenAmounts[_beneficiary] * claimablePercent - releasedAmount[_beneficiary];
+    return tokenAmounts[_beneficiary] * claimablePercent / BP - releasedAmount[_beneficiary];
   }
 
   function totalAmounts() public view returns (uint256 sum) {
