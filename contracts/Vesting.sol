@@ -126,7 +126,7 @@ contract Vesting is Ownable {
 
 
   function claimableAmount(address _beneficiary) public view returns (uint256) {
-    uint256 percentage = (tokenAmounts[_beneficiary] * BP) / unlockedSupply();
+    uint256 percentage = tokenAmounts[_beneficiary] * BP / unlockedSupply();
     uint256 daysPassed = (block.timestamp - lockupTime) / 1 days;
 
     uint256 claimablePercent = daysPassed * percentage;
