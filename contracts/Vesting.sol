@@ -15,7 +15,7 @@ contract Vesting is Ownable {
     uint256 unlockTime;
   }
 
-  UnlockEvent[] public unlockEvents;
+  UnlockEvent[] internal unlockEvents;
 
         
   event Released(address beneficiary, uint256 amount);
@@ -31,12 +31,14 @@ contract Vesting is Ownable {
 
   uint256 released;
   uint256 private BP = 1e18;
+  string public vestingName;
 
   address[] public beneficiaries;
 
-  constructor(IERC20 _token, uint256 _lockupTime) {
+  constructor(IERC20 _token, uint256 _lockupTime, string memory _vestingName) {
       token = _token;
       lockupTime = _lockupTime;
+      vestingName = _vestingName;
   }
 
   function addUnlockEvents(uint256[] memory _amount, uint256[] memory _unlockTime) onlyOwner external {
@@ -56,6 +58,10 @@ contract Vesting is Ownable {
       amount: _amount,
       unlockTime: _unlockTime
     }));
+  }
+
+  function getUnlockEvents() external view returns (UnlockEvent[] memory) {
+    return unlockEvents;
   }
 
   function _unlockedSupply() internal returns (uint256) {
@@ -136,10 +142,5 @@ contract Vesting is Ownable {
     return tokenAmounts[_beneficiary] * claimablePercent / BP - releasedAmount[_beneficiary];
   }
 
-  function totalAmounts() public view returns (uint256 sum) {
-    for (uint i = 0; i < beneficiaries.length; i++) {
-      sum += tokenAmounts[beneficiaries[i]];
-    }
-  }
 
 }
