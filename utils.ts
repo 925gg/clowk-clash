@@ -26,4 +26,12 @@ export function addMonths(time: number, months: number) {
   return toSec(moment(time * 1000).add(months - 1, 'months'));
 }
 
-export const availableConfigFiles = ['privateRound', 'publicRound', 'genesisCol', 'liquidity', 'team', 'treasury'];
+export const availableConfigFiles = [
+  'privateRound',
+  'publicRound',
+  'genesisCol',
+  'liquidity',
+  'team',
+  'treasury',
+  'testCase'
+];
