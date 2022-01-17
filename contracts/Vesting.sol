@@ -124,7 +124,7 @@ contract Vesting is Ownable {
     require(tokenAmounts[msg.sender] > 0, "No tokens to claim");
     require(releasedAmount[msg.sender] < tokenAmounts[msg.sender], "User already released all available tokens");
 
-    uint256 unreleased = _claimableAmount(msg.sender);
+    uint256 unreleased = _claimableAmount(msg.sender, _unlockedSupply());
     
     if (unreleased > 0) {
       released += unreleased;
@@ -134,26 +134,11 @@ contract Vesting is Ownable {
     }
   }
 
-
-  function _claimableAmount(address _beneficiary) internal returns (uint256) {
-    uint256 supply = _unlockedSupply();
-
-    if(supply == 0) return 0;
-
-    uint256 dailyPercentage = tokenAmounts[_beneficiary] * BP / supply;
-    uint256 daysPassed = (block.timestamp - start) / 1 days;
-
-    uint256 claimablePercent = daysPassed * dailyPercentage;
-
-    if(claimablePercent > BP) claimablePercent = BP; 
-
-    return tokenAmounts[_beneficiary] * claimablePercent / BP - releasedAmount[_beneficiary];
+  function claimableAmount(address _beneficiary) external view returns (uint256) {
+    return _claimableAmount(_beneficiary, unlockedSupply());
   }
 
-
-  function claimableAmount(address _beneficiary) public view returns (uint256) {
-    uint256 supply = unlockedSupply();
-
+  function _claimableAmount(address _beneficiary, uint256 supply) internal view returns (uint256) {
     if(supply == 0) return 0;
 
     uint256 dailyPercentage = tokenAmounts[_beneficiary] * BP / supply;

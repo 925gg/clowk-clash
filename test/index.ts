@@ -128,7 +128,7 @@ describe("Vesting", function () {
 
     const currentUnlockedSupply = new BigNumber((await vesting.unlockedSupply())._hex);
 
-    expect(new BigNumber(unlockEvents[0].amount).plus(unlockEvents[1].amount).toFixed()).to.be.equal(currentUnlockedSupply.toFixed())
+    expect(new BigNumber(unlockEvents[0].amount).plus(unlockEvents[1].amount).toFixed()).to.be.equal(currentUnlockedSupply.toFixed());
   });
 
   
