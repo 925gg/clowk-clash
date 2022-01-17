@@ -10,7 +10,7 @@ export interface UnlockEvent {
 
 export interface VestingSettings {
   unlockEvents: UnlockEvent[];
-  lockupTime: number;
+  start: number;
   vestingName: string;
 }
 
@@ -26,12 +26,17 @@ export function addMonths(time: number, months: number) {
   return toSec(moment(time * 1000).add(months - 1, 'months'));
 }
 
+export function sleep(prop: { seconds: number }) {
+  return new Promise(resolve => setTimeout(resolve, prop.seconds * 1000));
+}
+
+
+
 export const availableConfigFiles = [
   'privateRound',
   'publicRound',
   'genesisCol',
   'liquidity',
   'team',
-  'treasury',
-  'testCase'
+  'treasury'
 ];

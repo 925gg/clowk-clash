@@ -21,7 +21,7 @@ contract Vesting is Ownable {
   event Released(address beneficiary, uint256 amount);
 
   IERC20 public token;
-  uint256 public lockupTime;
+  uint256 public start;
 
   uint256 public unlockedSupplyIndex;
   uint256 public accumulatedUnlockedSupply;
@@ -35,9 +35,9 @@ contract Vesting is Ownable {
 
   address[] public beneficiaries;
 
-  constructor(IERC20 _token, uint256 _lockupTime, string memory _vestingName) {
+  constructor(IERC20 _token, uint256 _start, string memory _vestingName) {
       token = _token;
-      lockupTime = _lockupTime;
+      start = _start;
       vestingName = _vestingName;
   }
 
@@ -116,11 +116,15 @@ contract Vesting is Ownable {
     tokenAmounts[_beneficiary] = tokenAmounts[_beneficiary] + _tokenAmount;
   }
 
-  function claimTokens() public {
+  function getBeneficiaries() external view returns (address[] memory) {
+    return beneficiaries;
+  }
+
+  function claimTokens() external {
     require(tokenAmounts[msg.sender] > 0, "No tokens to claim");
     require(releasedAmount[msg.sender] < tokenAmounts[msg.sender], "User already released all available tokens");
 
-    uint256 unreleased = claimableAmount(msg.sender);
+    uint256 unreleased = _claimableAmount(msg.sender);
     
     if (unreleased > 0) {
       released += unreleased;
@@ -131,11 +135,31 @@ contract Vesting is Ownable {
   }
 
 
-  function claimableAmount(address _beneficiary) public view returns (uint256) {
-    uint256 percentage = tokenAmounts[_beneficiary] * BP / unlockedSupply();
-    uint256 daysPassed = (block.timestamp - lockupTime) / 1 days;
+  function _claimableAmount(address _beneficiary) internal returns (uint256) {
+    uint256 supply = _unlockedSupply();
 
-    uint256 claimablePercent = daysPassed * percentage;
+    if(supply == 0) return 0;
+
+    uint256 dailyPercentage = tokenAmounts[_beneficiary] * BP / supply;
+    uint256 daysPassed = (block.timestamp - start) / 1 days;
+
+    uint256 claimablePercent = daysPassed * dailyPercentage;
+
+    if(claimablePercent > BP) claimablePercent = BP; 
+
+    return tokenAmounts[_beneficiary] * claimablePercent / BP - releasedAmount[_beneficiary];
+  }
+
+
+  function claimableAmount(address _beneficiary) public view returns (uint256) {
+    uint256 supply = unlockedSupply();
+
+    if(supply == 0) return 0;
+
+    uint256 dailyPercentage = tokenAmounts[_beneficiary] * BP / supply;
+    uint256 daysPassed = (block.timestamp - start) / 1 days;
+
+    uint256 claimablePercent = daysPassed * dailyPercentage;
 
     if(claimablePercent > BP) claimablePercent = BP; 
 
