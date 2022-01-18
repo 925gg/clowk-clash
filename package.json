@@ -25,6 +25,7 @@
     "pify": "^2.3.0",
     "prettier": "^2.4.1",
     "solhint": "^3.3.6",
+    "solidity-coverage": "^0.7.18",
     "truffle": "^5.4.21",
     "truffle-plugin-verify": "^0.5.18",
     "ts-node": "^10.4.0",

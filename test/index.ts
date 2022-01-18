@@ -3,10 +3,11 @@ import chai from "chai";
 import { web3 } from "hardhat";
 import hre, { ethers } from "hardhat";
 import TimeTraveler from '../TimeTraveler';
-import { availableConfigFiles, toWei, VestingSettings } from "../utils";
+import { addMonths, availableConfigFiles, errorReason, toSec, toWei, UnlockEvent, VestingSettings } from "../utils";
 import { Contract } from "ethers";
 import BigNumber from "bignumber.js";
 import { solidity } from "ethereum-waffle";
+import moment from "moment";
 
 chai.use(solidity);
 
@@ -47,6 +48,52 @@ describe("Vesting", function () {
     console.log(`Vesting ${vestingName} deployed: ${vesting.address}`);
   });
 
+  it("Should fail adding Wrong Lock Events total Params", async function () {
+    let errorMessage = '';
+
+    try {
+      await vesting.addUnlockEvents(
+        [toWei('24000000'), toWei('24000000')],
+        [Math.round(Date.now()/1000)],
+      );
+
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+    
+    expect(errorMessage).to.be.equal('Invalid params');
+  });
+
+  it("Should fail adding Lock Events in Wrong order", async function () {
+    let errorMessage = '';
+
+    const start = toSec(moment());
+
+    const unlockEvents: UnlockEvent[] = [
+      {
+        amount: toWei('24000000'),
+        unlockTime: addMonths(start, 3)
+      },
+      {
+        amount: toWei('24000000'),
+        unlockTime: addMonths(start, 1)
+      }
+    ];
+
+    try {
+      await vesting.addUnlockEvents(
+        unlockEvents.map(e => e.amount),
+        unlockEvents.map(e => e.unlockTime),
+      );
+
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+    
+    expect(errorMessage).to.be.equal('Unlock time has to be in order');
+  });
+  
+
 
   it("Should add Unlock Events", async function () {
     const {unlockEvents} = await import(`../vestingSettings/${CONFIG_FILE}`) as VestingSettings;
@@ -64,6 +111,56 @@ describe("Vesting", function () {
     await (await clashToken.transfer(vesting.address, amount)).wait();
 
     expect((await clashToken.balanceOf(vesting.address)).toString()).to.equal(amount);
+  });
+
+
+  it("Should fail adding zero address as Beneficiary", async function () {
+    let errorMessage = '';
+
+    const amount = toWei(`1000000`);
+
+    try {
+      await vesting.addBeneficiaries(
+       [ethers.constants.AddressZero],
+       [amount],
+     );
+      
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+
+    expect(errorMessage).to.be.equal("The beneficiary's address cannot be 0");
+  });
+
+  it("Should fail adding zero amount to Beneficiary", async function () {
+    let errorMessage = '';
+
+    const amount = toWei(`0`);
+
+    try {
+      await vesting.addBeneficiaries(
+       [account],
+       [amount],
+     );
+      
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+
+    expect(errorMessage).to.be.equal("Amount has to be greater than 0");
+  });
+
+  it("Should Fail Claiming Tokens for non existent beneficiary", async function () {
+    let errorMessage = '';
+
+    try {
+      await vesting.claimTokens();
+      
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+
+    expect(errorMessage).to.be.equal("No tokens to claim");
   });
 
 
@@ -114,6 +211,7 @@ describe("Vesting", function () {
     expect(currentClaimableAmount.toFixed()).to.be.equal(`0`);
     expect(releasedAmount.toFixed()).to.be.equal(previousClaimableAmount.toFixed());
   });
+
 
 
   it("Should get Unlocked Supply after some months", async function () {

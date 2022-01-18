@@ -30,6 +30,11 @@ export function sleep(prop: { seconds: number }) {
   return new Promise(resolve => setTimeout(resolve, prop.seconds * 1000));
 }
 
+export function errorReason(message: string) {
+  let str = message.replace('VM Exception while processing transaction: reverted with reason string ', '');
+  return str.substring(1, str.length - 1);
+}
+
 
 
 export const availableConfigFiles = [
