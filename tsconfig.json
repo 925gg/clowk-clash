@@ -9,10 +9,7 @@
     "strict": true,
     "rootDirs": ["./src", "./scripts", "./test"],
     "esModuleInterop": true,
-    "types": [
-      "mocha",
-      "chai"
-    ]
+    "types": ["mocha", "chai"]
   },
   "exclude": ["dist", "node_modules"],
   "include": ["./test", "./src", "./scripts"],
