@@ -48,6 +48,7 @@ describe("Vesting", function () {
     console.log(`Vesting ${vestingName} deployed: ${vesting.address}`);
   });
 
+
   it("Should fail adding Wrong Lock Events total Params", async function () {
     let errorMessage = '';
 
@@ -63,6 +64,7 @@ describe("Vesting", function () {
     
     expect(errorMessage).to.be.equal('Invalid params');
   });
+
 
   it("Should fail adding Lock Events in Wrong order", async function () {
     let errorMessage = '';
@@ -92,7 +94,6 @@ describe("Vesting", function () {
     
     expect(errorMessage).to.be.equal('Unlock time has to be in order');
   });
-  
 
 
   it("Should add Unlock Events", async function () {
@@ -102,6 +103,13 @@ describe("Vesting", function () {
       unlockEvents.map(e => e.amount),
       unlockEvents.map(e => e.unlockTime),
     )).wait(1);
+  });
+
+
+  it("Should get Unlock Events", async function () {
+    const unlockEvents = await vesting.getUnlockEvents();
+
+    expect(unlockEvents).to.have.length.greaterThan(0);
   });
 
 
@@ -132,6 +140,7 @@ describe("Vesting", function () {
     expect(errorMessage).to.be.equal("The beneficiary's address cannot be 0");
   });
 
+
   it("Should fail adding zero amount to Beneficiary", async function () {
     let errorMessage = '';
 
@@ -149,6 +158,7 @@ describe("Vesting", function () {
 
     expect(errorMessage).to.be.equal("Amount has to be greater than 0");
   });
+
 
   it("Should Fail Claiming Tokens for non existent beneficiary", async function () {
     let errorMessage = '';
@@ -177,6 +187,13 @@ describe("Vesting", function () {
     
     expect(beneficiary).to.equal(account);
     expect(tokenAmount.toString()).to.equal(amount);
+  });
+
+
+  it("Should get Beneficiaries", async function () {
+    const beneficiaries = await vesting.getBeneficiaries();
+
+    expect(beneficiaries).to.have.length.greaterThan(0);
   });
 
   
@@ -211,7 +228,6 @@ describe("Vesting", function () {
     expect(currentClaimableAmount.toFixed()).to.be.equal(`0`);
     expect(releasedAmount.toFixed()).to.be.equal(previousClaimableAmount.toFixed());
   });
-
 
 
   it("Should get Unlocked Supply after some months", async function () {

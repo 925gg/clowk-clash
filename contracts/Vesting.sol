@@ -129,8 +129,6 @@ contract Vesting is Ownable {
     for (uint i = 0; i <_beneficiaries.length; i++) {
       addBeneficiary(_beneficiaries[i], _tokenAmounts[i]);
     }
-
-  // require(totalAmounts() == token.balanceOf(address(this)), "Invalid token amount");
   }
 
   function addBeneficiary(address _beneficiary, uint256 _tokenAmount) internal {
