@@ -1,25 +1,18 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.10;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/IVesting.sol";
 
-
-contract Vesting is Ownable {
+contract Vesting is IVesting, Ownable {
   using SafeERC20 for IERC20;
-
-  struct UnlockEvent {
-    uint256 amount;
-    uint256 unlockTime;
-  }
 
   UnlockEvent[] internal unlockEvents;
 
         
-  event Released(address beneficiary, uint256 amount);
-
   IERC20 public token;
   uint256 public start;
 
@@ -51,7 +44,7 @@ contract Vesting is Ownable {
    * @param _amount The Unlock Amount.
    * @param _unlockTime The Unlock Time (The month in timestamp).
    */
-  function addUnlockEvents(uint256[] memory _amount, uint256[] memory _unlockTime) onlyOwner external {
+  function addUnlockEvents(uint256[] memory _amount, uint256[] memory _unlockTime) onlyOwner override external {
     require(_amount.length == _unlockTime.length, "Invalid params");
 
     for (uint i = 0; i < _amount.length; i++) {
@@ -74,7 +67,7 @@ contract Vesting is Ownable {
    * @dev Fetches the Vesting Schedule Configuration
    * @return The Vesting Schedule Configuration
    */
-  function getUnlockEvents() external view returns (UnlockEvent[] memory) {
+  function getUnlockEvents() external override view returns (UnlockEvent[] memory) {
     return unlockEvents;
   }
 
@@ -104,7 +97,7 @@ contract Vesting is Ownable {
    * @notice This function doesn't modify the contract state and it's just called for display purposes
    * @return The Unlocked Supply
    */
-  function unlockedSupply() public view returns (uint256) {
+  function unlockedSupply() public override view returns (uint256) {
     uint256 _amount = accumulatedUnlockedSupply;
 
     for(uint256 i = unlockedSupplyIndex; i < unlockEvents.length; i++) {
@@ -123,7 +116,7 @@ contract Vesting is Ownable {
   /**
    * @dev Adds Beneficiaries addresses and amounts
    */
-  function addBeneficiaries(address[] memory _beneficiaries, uint256[] memory _tokenAmounts) onlyOwner external {
+  function addBeneficiaries(address[] memory _beneficiaries, uint256[] memory _tokenAmounts) onlyOwner override external {
     require(_beneficiaries.length == _tokenAmounts.length, "Invalid params");
 
     for (uint i = 0; i <_beneficiaries.length; i++) {
@@ -146,14 +139,14 @@ contract Vesting is Ownable {
    * @dev Gets All Beneficiaries Addresses
    * @return All Beneficiaries Addresses
    */
-  function getBeneficiaries() external view returns (address[] memory) {
+  function getBeneficiaries() external override view returns (address[] memory) {
     return beneficiaries;
   }
 
   /**
    * @dev Claims All available User Tokens
    */
-  function claimTokens() external {
+  function claimTokens() external override {
     require(tokenAmounts[msg.sender] > 0, "No tokens to claim");
     require(releasedAmount[msg.sender] < tokenAmounts[msg.sender], "User already released all available tokens");
 
@@ -171,7 +164,7 @@ contract Vesting is Ownable {
    * @dev Calculates the total Claimable Tokens according to how many days have passed
    * @return The total Claimable Tokens
    */
-  function claimableAmount(address _beneficiary) external view returns (uint256) {
+  function claimableAmount(address _beneficiary) external override view returns (uint256) {
     return _claimableAmount(_beneficiary, unlockedSupply());
   }
 
