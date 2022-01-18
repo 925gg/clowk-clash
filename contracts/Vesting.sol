@@ -50,7 +50,6 @@ contract Vesting is Ownable {
    * @dev Adds the Vesting Schedule Configuration month by month
    * @param _amount The Unlock Amount.
    * @param _unlockTime The Unlock Time (The month in timestamp).
-   * @return The amount of rewards that `account` has earned in total.
    */
   function addUnlockEvents(uint256[] memory _amount, uint256[] memory _unlockTime) onlyOwner external {
     require(_amount.length == _unlockTime.length, "Invalid params");
