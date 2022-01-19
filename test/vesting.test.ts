@@ -1,15 +1,16 @@
 import { expect } from "chai";
-import chai from "chai";
-import { web3 } from "hardhat";
+// import chai from "chai";
+// import { web3 } from "hardhat";
 import hre, { ethers } from "hardhat";
 import TimeTraveler from '../TimeTraveler';
 import { addMonths, availableConfigFiles, errorReason, toSec, toWei, UnlockEvent, VestingSettings } from "../utils";
 import { Contract } from "ethers";
 import BigNumber from "bignumber.js";
-import { solidity } from "ethereum-waffle";
+// import { solidity } from "ethereum-waffle";
 import moment from "moment";
+import {ClashToken, Vesting} from '../typechain-types';
 
-chai.use(solidity);
+// chai.use(solidity);
 
 
 const timeTraveler = new TimeTraveler(hre.network.provider);
@@ -19,14 +20,14 @@ describe("Vesting", function () {
   if(!availableConfigFiles.includes(CONFIG_FILE as string)) throw new Error('Invalid Config File');
 
   let TOKEN_ADDRESS: string;
-  let vesting: Contract;
-  let clashToken: Contract;
+  let vesting: Vesting;
+  let clashToken: ClashToken;
   let account: string;
 
   
   it("Should deploy Token", async function () {
     const TokenFactory = await ethers.getContractFactory("ClashToken");
-    clashToken = await TokenFactory.deploy('Chibi Clash', 'CLASH');
+    clashToken = await TokenFactory.deploy('Chibi Clash', 'CLASH') as ClashToken;
   
     await clashToken.deployed();
     console.log("Token deployed:", clashToken.address);
@@ -42,7 +43,7 @@ describe("Vesting", function () {
   
     // We get the contract to deploy
     const VestingFactory = await ethers.getContractFactory("Vesting");
-    vesting = await VestingFactory.deploy(TOKEN_ADDRESS, start, vestingName);
+    vesting = await VestingFactory.deploy(TOKEN_ADDRESS, start, vestingName) as Vesting;
   
     await vesting.deployed();
     console.log(`Vesting ${vestingName} deployed: ${vesting.address}`);

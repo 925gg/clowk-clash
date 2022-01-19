@@ -5,9 +5,11 @@ dotenv.config();
 import "@nomiclabs/hardhat-truffle5";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
-
-require("@nomiclabs/hardhat-web3");
-require('solidity-coverage');
+import "@nomiclabs/hardhat-web3";
+import "solidity-coverage";
+import '@typechain/hardhat'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
