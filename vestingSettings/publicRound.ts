@@ -1,4 +1,5 @@
 import moment from "moment";
+// eslint-disable-next-line node/no-missing-import
 import { addMonths, toSec, UnlockEvent } from "../utils";
 
 export const vestingName = `Public Round`;

@@ -1,3 +1,4 @@
+// eslint-disable-next-line node/no-unpublished-import
 import { EthereumProvider } from "hardhat/types";
 
 class TimeTraveler {
@@ -12,16 +13,15 @@ class TimeTraveler {
     const snapshot = await this.ethereum.send("evm_snapshot", []);
     await this.mine_blocks(1);
     this.snapshotID = snapshot;
-    return;
   }
 
   public async revertSnapshot() {
     await this.ethereum.send("evm_revert", [this.snapshotID]);
     await this.mine_blocks(1);
     await this.snapshot();
-    return;
   }
 
+  // eslint-disable-next-line camelcase
   public async mine_blocks(amount: number) {
     for (let i = 0; i < amount; i++) {
       await this.ethereum.send("evm_mine", []);

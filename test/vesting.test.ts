@@ -198,41 +198,61 @@ describe("Vesting", function () {
     expect(beneficiaries).to.have.length.greaterThan(0);
   });
 
-  // it("Should get Claimable Amount after some days", async function () {
-  //   await timeTraveler.increaseTime(240);
+  it("Should get Claimable Amount after some period", async function () {
+    const start = toSec(moment());
 
-  //   const daysPassed = 3;
-  //   await timeTraveler.increaseTime(daysPassed * 24 * 3600);
+    await timeTraveler.setNextBlockTimestamp(start);
 
-  //   const unlockedSupply = new BigNumber((await vesting.unlockedSupply())._hex);
-  //   const tokenAmount = new BigNumber(
-  //     (await vesting.tokenAmounts(account))._hex
-  //   );
-  //   const claimableAmount = new BigNumber(
-  //     (await vesting.claimableAmount(account))._hex
-  //   );
+    const BP = new BigNumber(10).pow(18);
 
-  //   const dailyPercentage = new BigNumber(tokenAmount).div(unlockedSupply);
+    const tokenAmount = new BigNumber(
+      (await vesting.tokenAmounts(account)).toHexString()
+    );
+    const previousClaimablePercent = new BigNumber(
+      (await vesting.claimablePercent()).toHexString()
+    );
+    const previousClaimableAmount = new BigNumber(
+      (await vesting.claimableAmount(account)).toHexString()
+    );
 
-  //   const claimablePercent = new BigNumber(daysPassed).times(dailyPercentage);
+    // For private round 4% is unlocked at TGE
+    expect(previousClaimablePercent.div(BP).toNumber()).to.be.equal(4); // 4%
 
-  //   expect(
-  //     new BigNumber(tokenAmount).times(claimablePercent).toNumber()
-  //   ).to.be.equal(claimableAmount.toNumber());
-  // });
+    expect(previousClaimableAmount.toFixed()).to.be.equal(
+      tokenAmount.times(previousClaimablePercent).div(BP.times(100)).toFixed()
+    );
+
+    await timeTraveler.setNextBlockTimestamp(
+      addMonths(start, 3) + 15 * 24 * 3600 // current date = month 3 + 15 days
+    );
+
+    const currentClaimablePercent = new BigNumber(
+      (await vesting.claimablePercent()).toHexString()
+    );
+    const currentClaimableAmount = new BigNumber(
+      (await vesting.claimableAmount(account)).toHexString()
+    );
+
+    // For private round 6% is unlocked after month 3. 3% more is unlocked after 15 days corresponding to month 4
+    expect(currentClaimablePercent.div(BP).toNumber()).to.be.closeTo(13, 1); // 4% + 6% + ~3% = ~13%
+
+    expect(currentClaimableAmount.toFixed()).to.be.equal(
+      tokenAmount.times(currentClaimablePercent).div(BP.times(100)).toFixed()
+    );
+  });
 
   it("Should Claim Tokens", async function () {
     const previousClaimableAmount = new BigNumber(
-      (await vesting.claimableAmount(account))._hex
+      (await vesting.claimableAmount(account)).toHexString()
     );
 
     await (await vesting.claimTokens()).wait();
 
     const currentClaimableAmount = new BigNumber(
-      (await vesting.claimableAmount(account))._hex
+      (await vesting.claimableAmount(account)).toHexString()
     );
     const releasedAmount = new BigNumber(
-      (await vesting.releasedAmount(account))._hex
+      (await vesting.releasedAmount(account)).toHexString()
     );
 
     expect(currentClaimableAmount.toFixed()).to.be.equal(`0`);
@@ -240,30 +260,4 @@ describe("Vesting", function () {
       previousClaimableAmount.toFixed()
     );
   });
-
-  // it("Should get Unlocked Supply after some months", async function () {
-  //   // eslint-disable-next-line node/no-unsupported-features/es-syntax
-  //   const { unlockEvents } = (await import(
-  //     `../vestingSettings/${CONFIG_FILE}`
-  //   )) as VestingSettings;
-
-  //   const previousUnlockedSupply = new BigNumber(
-  //     (await vesting.unlockedSupply())._hex
-  //   );
-
-  //   expect(previousUnlockedSupply.toFixed()).to.equal(unlockEvents[0].amount);
-
-  //   const monthPassed = 3;
-  //   await timeTraveler.increaseTime((monthPassed - 1) * 30 * 24 * 3600);
-
-  //   const currentUnlockedSupply = new BigNumber(
-  //     (await vesting.unlockedSupply())._hex
-  //   );
-
-  //   expect(
-  //     new BigNumber(unlockEvents[0].amount)
-  //       .plus(unlockEvents[1].amount)
-  //       .toFixed()
-  //   ).to.be.equal(currentUnlockedSupply.toFixed());
-  // });
 });
