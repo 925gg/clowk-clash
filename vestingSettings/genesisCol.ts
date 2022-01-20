@@ -1,6 +1,6 @@
-import moment from 'moment';
-import { addMonths, toSec, toWei, UnlockEvent } from '../utils';
-
+import moment from "moment";
+// eslint-disable-next-line node/no-missing-import
+import { addMonths, toSec, UnlockEvent } from "../utils";
 
 export const vestingName = `Genesis Collector Rewards`;
 
@@ -8,7 +8,7 @@ export const start = toSec(moment());
 
 export const unlockEvents: UnlockEvent[] = [
   {
-    amount: toWei('55000000'),
-    unlockTime: addMonths(start, 1)
+    percent: 100,
+    unlockTime: addMonths(start, 1),
   },
 ];

@@ -19,12 +19,12 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export declare namespace IVesting {
   export type UnlockEventStruct = {
-    amount: BigNumberish;
+    percent: BigNumberish;
     unlockTime: BigNumberish;
   };
 
   export type UnlockEventStructOutput = [BigNumber, BigNumber] & {
-    amount: BigNumber;
+    percent: BigNumber;
     unlockTime: BigNumber;
   };
 }
@@ -36,9 +36,9 @@ export interface IVestingInterface extends utils.Interface {
     "addUnlockEvents(uint256[],uint256[])": FunctionFragment;
     "claimTokens()": FunctionFragment;
     "claimableAmount(address)": FunctionFragment;
+    "claimablePercent()": FunctionFragment;
     "getBeneficiaries()": FunctionFragment;
     "getUnlockEvents()": FunctionFragment;
-    "unlockedSupply()": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -58,15 +58,15 @@ export interface IVestingInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
+    functionFragment: "claimablePercent",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getBeneficiaries",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getUnlockEvents",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "unlockedSupply",
     values?: undefined
   ): string;
 
@@ -87,15 +87,15 @@ export interface IVestingInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "claimablePercent",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getBeneficiaries",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getUnlockEvents",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "unlockedSupply",
     data: BytesLike
   ): Result;
 
@@ -162,13 +162,13 @@ export interface IVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    claimablePercent(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getBeneficiaries(overrides?: CallOverrides): Promise<[string[]]>;
 
     getUnlockEvents(
       overrides?: CallOverrides
     ): Promise<[IVesting.UnlockEventStructOutput[]]>;
-
-    unlockedSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
   addBeneficiaries(
@@ -192,13 +192,13 @@ export interface IVesting extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  claimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
+
   getBeneficiaries(overrides?: CallOverrides): Promise<string[]>;
 
   getUnlockEvents(
     overrides?: CallOverrides
   ): Promise<IVesting.UnlockEventStructOutput[]>;
-
-  unlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
     addBeneficiaries(
@@ -220,13 +220,13 @@ export interface IVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    claimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
+
     getBeneficiaries(overrides?: CallOverrides): Promise<string[]>;
 
     getUnlockEvents(
       overrides?: CallOverrides
     ): Promise<IVesting.UnlockEventStructOutput[]>;
-
-    unlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {
@@ -259,11 +259,11 @@ export interface IVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    claimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
+
     getBeneficiaries(overrides?: CallOverrides): Promise<BigNumber>;
 
     getUnlockEvents(overrides?: CallOverrides): Promise<BigNumber>;
-
-    unlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -288,10 +288,10 @@ export interface IVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    claimablePercent(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getBeneficiaries(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getUnlockEvents(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    unlockedSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

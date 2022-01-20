@@ -18,7 +18,7 @@ contract ClashToken is ERC20Pausable, Ownable {
         _mint(_receiver, _amount);
     }
 
-    function burn(uint256 amount) public virtual {
+    function burn(uint256 amount) external {
         _burn(_msgSender(), amount);
     }
 

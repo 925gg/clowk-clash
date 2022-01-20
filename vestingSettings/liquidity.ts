@@ -1,24 +1,26 @@
-import moment from 'moment';
-import { addMonths, toSec, toWei, UnlockEvent } from '../utils';
-
+import moment from "moment";
+import { addMonths, toSec, UnlockEvent } from "../utils";
 
 export const vestingName = `Liquidity`;
 
 export const start = toSec(moment());
 
-
 const unlockEvents: UnlockEvent[] = [
   {
-    amount: toWei('174000000'),
-    unlockTime: addMonths(start, 2)
-  }
+    percent: 0,
+    unlockTime: addMonths(start, 1),
+  },
+  {
+    percent: 12,
+    unlockTime: addMonths(start, 2),
+  },
 ];
 
-for(let i = 3; i <= 24; i++ ) {
+for (let i = 3; i <= 24; i++) {
   unlockEvents.push({
-    amount: toWei('58000000'),
-    unlockTime: addMonths(start, i)
-  })
+    percent: 4,
+    unlockTime: addMonths(start, i),
+  });
 }
 
-export {unlockEvents};
+export { unlockEvents };

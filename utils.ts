@@ -2,9 +2,8 @@ import moment from "moment";
 
 declare const web3: any;
 
-
 export interface UnlockEvent {
-  amount: string;
+  percent: number;
   unlockTime: number;
 }
 
@@ -23,25 +22,26 @@ export function toWei(value: string | number) {
 }
 
 export function addMonths(time: number, months: number) {
-  return toSec(moment(time * 1000).add(months - 1, 'months'));
+  return toSec(moment(time * 1000).add(months - 1, "months"));
 }
 
 export function sleep(prop: { seconds: number }) {
-  return new Promise(resolve => setTimeout(resolve, prop.seconds * 1000));
+  return new Promise((resolve) => setTimeout(resolve, prop.seconds * 1000));
 }
 
 export function errorReason(message: string) {
-  let str = message.replace('VM Exception while processing transaction: reverted with reason string ', '');
+  const str = message.replace(
+    "VM Exception while processing transaction: reverted with reason string ",
+    ""
+  );
   return str.substring(1, str.length - 1);
 }
 
-
-
 export const availableConfigFiles = [
-  'privateRound',
-  'publicRound',
-  'genesisCol',
-  'liquidity',
-  'team',
-  'treasury'
+  "privateRound",
+  "publicRound",
+  "genesisCol",
+  "liquidity",
+  "team",
+  "treasury",
 ];

@@ -19,12 +19,12 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export declare namespace IVesting {
   export type UnlockEventStruct = {
-    amount: BigNumberish;
+    percent: BigNumberish;
     unlockTime: BigNumberish;
   };
 
   export type UnlockEventStructOutput = [BigNumber, BigNumber] & {
-    amount: BigNumber;
+    percent: BigNumber;
     unlockTime: BigNumber;
   };
 }
@@ -32,12 +32,14 @@ export declare namespace IVesting {
 export interface VestingInterface extends utils.Interface {
   contractName: "Vesting";
   functions: {
-    "accumulatedUnlockedSupply()": FunctionFragment;
+    "accumulatedClaimablePercent()": FunctionFragment;
     "addBeneficiaries(address[],uint256[])": FunctionFragment;
     "addUnlockEvents(uint256[],uint256[])": FunctionFragment;
     "beneficiaries(uint256)": FunctionFragment;
     "claimTokens()": FunctionFragment;
     "claimableAmount(address)": FunctionFragment;
+    "claimablePercent()": FunctionFragment;
+    "claimablePercentIndex()": FunctionFragment;
     "getBeneficiaries()": FunctionFragment;
     "getUnlockEvents()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -47,13 +49,11 @@ export interface VestingInterface extends utils.Interface {
     "token()": FunctionFragment;
     "tokenAmounts(address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "unlockedSupply()": FunctionFragment;
-    "unlockedSupplyIndex()": FunctionFragment;
     "vestingName()": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "accumulatedUnlockedSupply",
+    functionFragment: "accumulatedClaimablePercent",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -75,6 +75,14 @@ export interface VestingInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "claimableAmount",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "claimablePercent",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "claimablePercentIndex",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getBeneficiaries",
@@ -104,20 +112,12 @@ export interface VestingInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "unlockedSupply",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "unlockedSupplyIndex",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "vestingName",
     values?: undefined
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "accumulatedUnlockedSupply",
+    functionFragment: "accumulatedClaimablePercent",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -138,6 +138,14 @@ export interface VestingInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "claimableAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "claimablePercent",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "claimablePercentIndex",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -165,14 +173,6 @@ export interface VestingInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "unlockedSupply",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "unlockedSupplyIndex",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -232,7 +232,9 @@ export interface Vesting extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    accumulatedUnlockedSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
+    accumulatedClaimablePercent(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     addBeneficiaries(
       _beneficiaries: string[],
@@ -241,7 +243,7 @@ export interface Vesting extends BaseContract {
     ): Promise<ContractTransaction>;
 
     addUnlockEvents(
-      _amount: BigNumberish[],
+      _percent: BigNumberish[],
       _unlockTime: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -259,6 +261,10 @@ export interface Vesting extends BaseContract {
       _beneficiary: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    claimablePercent(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    claimablePercentIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getBeneficiaries(overrides?: CallOverrides): Promise<[string[]]>;
 
@@ -288,14 +294,10 @@ export interface Vesting extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    unlockedSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    unlockedSupplyIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     vestingName(overrides?: CallOverrides): Promise<[string]>;
   };
 
-  accumulatedUnlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
+  accumulatedClaimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
 
   addBeneficiaries(
     _beneficiaries: string[],
@@ -304,7 +306,7 @@ export interface Vesting extends BaseContract {
   ): Promise<ContractTransaction>;
 
   addUnlockEvents(
-    _amount: BigNumberish[],
+    _percent: BigNumberish[],
     _unlockTime: BigNumberish[],
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -319,6 +321,10 @@ export interface Vesting extends BaseContract {
     _beneficiary: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
+
+  claimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
+
+  claimablePercentIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
   getBeneficiaries(overrides?: CallOverrides): Promise<string[]>;
 
@@ -345,14 +351,10 @@ export interface Vesting extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  unlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  unlockedSupplyIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
   vestingName(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    accumulatedUnlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
+    accumulatedClaimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
 
     addBeneficiaries(
       _beneficiaries: string[],
@@ -361,7 +363,7 @@ export interface Vesting extends BaseContract {
     ): Promise<void>;
 
     addUnlockEvents(
-      _amount: BigNumberish[],
+      _percent: BigNumberish[],
       _unlockTime: BigNumberish[],
       overrides?: CallOverrides
     ): Promise<void>;
@@ -377,6 +379,10 @@ export interface Vesting extends BaseContract {
       _beneficiary: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    claimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
+
+    claimablePercentIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
     getBeneficiaries(overrides?: CallOverrides): Promise<string[]>;
 
@@ -401,10 +407,6 @@ export interface Vesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    unlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    unlockedSupplyIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
     vestingName(overrides?: CallOverrides): Promise<string>;
   };
 
@@ -426,7 +428,7 @@ export interface Vesting extends BaseContract {
   };
 
   estimateGas: {
-    accumulatedUnlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
+    accumulatedClaimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
 
     addBeneficiaries(
       _beneficiaries: string[],
@@ -435,7 +437,7 @@ export interface Vesting extends BaseContract {
     ): Promise<BigNumber>;
 
     addUnlockEvents(
-      _amount: BigNumberish[],
+      _percent: BigNumberish[],
       _unlockTime: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -453,6 +455,10 @@ export interface Vesting extends BaseContract {
       _beneficiary: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    claimablePercent(overrides?: CallOverrides): Promise<BigNumber>;
+
+    claimablePercentIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
     getBeneficiaries(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -477,15 +483,11 @@ export interface Vesting extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    unlockedSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    unlockedSupplyIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
     vestingName(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    accumulatedUnlockedSupply(
+    accumulatedClaimablePercent(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -496,7 +498,7 @@ export interface Vesting extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     addUnlockEvents(
-      _amount: BigNumberish[],
+      _percent: BigNumberish[],
       _unlockTime: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -512,6 +514,12 @@ export interface Vesting extends BaseContract {
 
     claimableAmount(
       _beneficiary: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    claimablePercent(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    claimablePercentIndex(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -542,12 +550,6 @@ export interface Vesting extends BaseContract {
     transferOwnership(
       newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unlockedSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    unlockedSupplyIndex(
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     vestingName(overrides?: CallOverrides): Promise<PopulatedTransaction>;

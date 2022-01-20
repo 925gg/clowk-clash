@@ -15,8 +15,11 @@ contract Vesting is IVesting, Ownable {
     IERC20 public token;
     uint256 public start;
 
-    uint256 public unlockedSupplyIndex;
-    uint256 public accumulatedUnlockedSupply;
+    // uint256 public unlockedSupplyIndex;
+    // uint256 public accumulatedUnlockedSupply;
+
+    uint256 public claimablePercentIndex;
+    uint256 public accumulatedClaimablePercent;
 
     mapping(address => uint256) public tokenAmounts;
     mapping(address => uint256) public releasedAmount;
@@ -44,16 +47,16 @@ contract Vesting is IVesting, Ownable {
 
     /**
      * @dev Adds the Vesting Schedule Configuration month by month
-     * @param _amount The Unlock Amount.
+     * @param _percent The Unlock Percent.
      * @param _unlockTime The Unlock Time (The month in timestamp).
      */
     function addUnlockEvents(
-        uint256[] memory _amount,
+        uint256[] memory _percent,
         uint256[] memory _unlockTime
     ) external override onlyOwner {
-        require(_amount.length == _unlockTime.length, "Invalid params");
+        require(_percent.length == _unlockTime.length, "Invalid params");
 
-        for (uint256 i = 0; i < _amount.length; i++) {
+        for (uint256 i = 0; i < _percent.length; i++) {
             if (i > 0) {
                 require(
                     _unlockTime[i] > _unlockTime[i - 1],
@@ -61,13 +64,13 @@ contract Vesting is IVesting, Ownable {
                 );
             }
 
-            addUnlockEvent(_amount[i], _unlockTime[i]);
+            addUnlockEvent(_percent[i], _unlockTime[i]);
         }
     }
 
-    function addUnlockEvent(uint256 _amount, uint256 _unlockTime) internal {
+    function addUnlockEvent(uint256 _percent, uint256 _unlockTime) internal {
         unlockEvents.push(
-            UnlockEvent({amount: _amount, unlockTime: _unlockTime})
+            UnlockEvent({percent: _percent, unlockTime: _unlockTime})
         );
     }
 
@@ -75,46 +78,13 @@ contract Vesting is IVesting, Ownable {
      * @dev Fetches the Vesting Schedule Configuration
      * @return The Vesting Schedule Configuration
      */
-    function getUnlockEvents() external override view returns (UnlockEvent[] memory) {
+    function getUnlockEvents()
+        external
+        view
+        override
+        returns (UnlockEvent[] memory)
+    {
         return unlockEvents;
-    }
-
-    /**
-     * @dev Calculates the total tokens unlocked in contract (Unlocked Supply) according to current month
-     * @notice This internal function is only called by contract and
-     * modifies the contract state so the call doesn't run the for loop from the beggining everytime
-     * @return The Unlocked Supply
-     */
-    function _unlockedSupply() internal returns (uint256) {
-        for (uint256 i = unlockedSupplyIndex; i < unlockEvents.length; i++) {
-            if (block.timestamp > unlockEvents[i].unlockTime) {
-                accumulatedUnlockedSupply += unlockEvents[i].amount;
-            } else {
-                unlockedSupplyIndex = i;
-                break;
-            }
-        }
-
-        return accumulatedUnlockedSupply;
-    }
-
-    /**
-     * @dev Calculates the total tokens unlocked in contract (Unlocked Supply) according to current month
-     * @notice This function doesn't modify the contract state and it's just called for display purposes
-     * @return The Unlocked Supply
-     */
-    function unlockedSupply() public override view returns (uint256) {
-        uint256 _amount = accumulatedUnlockedSupply;
-
-        for (uint256 i = unlockedSupplyIndex; i < unlockEvents.length; i++) {
-            if (block.timestamp > unlockEvents[i].unlockTime) {
-                _amount += unlockEvents[i].amount;
-            } else {
-                break;
-            }
-        }
-
-        return _amount;
     }
 
     /**
@@ -132,8 +102,6 @@ contract Vesting is IVesting, Ownable {
         for (uint256 i = 0; i < _beneficiaries.length; i++) {
             addBeneficiary(_beneficiaries[i], _tokenAmounts[i]);
         }
-
-        // require(totalAmounts() == token.balanceOf(address(this)), "Invalid token amount");
     }
 
     function addBeneficiary(address _beneficiary, uint256 _tokenAmount)
@@ -156,7 +124,12 @@ contract Vesting is IVesting, Ownable {
      * @dev Gets All Beneficiaries Addresses
      * @return All Beneficiaries Addresses
      */
-    function getBeneficiaries() external override view returns (address[] memory) {
+    function getBeneficiaries()
+        external
+        view
+        override
+        returns (address[] memory)
+    {
         return beneficiaries;
     }
 
@@ -170,7 +143,7 @@ contract Vesting is IVesting, Ownable {
             "User already released all available tokens"
         );
 
-        uint256 unreleased = _claimableAmount(msg.sender, _unlockedSupply());
+        uint256 unreleased = _claimableAmount(msg.sender, _claimablePercent());
 
         if (unreleased > 0) {
             released += unreleased;
@@ -181,35 +154,101 @@ contract Vesting is IVesting, Ownable {
     }
 
     /**
+     * @dev Calculates the total Claimable Percent according to how many days have passed
+     * @notice This internal function is only called by contract and
+    * modifies the contract state so the call doesn't run the for loop from the beggining everytime
+     * @return The total Claimable Percent
+     */
+    function _claimablePercent() internal returns (uint256) {
+        // cannot claim before TGE
+        if (block.timestamp < start) return 0;
+
+        uint256 claimablePercentForCurentMonth;
+
+        for (uint256 i = claimablePercentIndex; i < unlockEvents.length; i++) {
+            //unlockEvents[i].percent = 4 for 4%
+            uint256 lockedMonthPercent = unlockEvents[i].percent * BP;
+
+            if (block.timestamp > unlockEvents[i].unlockTime) {
+                accumulatedClaimablePercent += lockedMonthPercent;
+
+            } else {
+                // "i" will always be greater than 0 since unlockEvents[0].unlockTime = start
+                uint256 totalDaysForCurrentMonth = (unlockEvents[i].unlockTime - unlockEvents[i - 1].unlockTime) / 1 days;
+                uint256 daysPassedForCurrentMonth = (block.timestamp - unlockEvents[i - 1].unlockTime) / 1 days;
+
+                claimablePercentForCurentMonth += (lockedMonthPercent * daysPassedForCurrentMonth) / totalDaysForCurrentMonth;
+
+                claimablePercentIndex = i;
+                break;
+            }
+        }
+
+        uint256 resultPercent = accumulatedClaimablePercent + claimablePercentForCurentMonth;
+
+        if (resultPercent > 100 * BP) resultPercent = 100 * BP;
+
+        // if 4% then it'll return 4 * BP
+        return resultPercent; 
+    }
+
+    /**
+     * @dev Calculates the total Claimable Percent according to how many days have passed
+     * @notice This function doesn't modify the contract state and it's just called for display purposes
+     * @return The total Claimable Percent
+     */
+    function claimablePercent() public view override returns (uint256) {
+        // cannot claim before TGE
+        if (block.timestamp < start) return 0;
+
+        uint256 _accumulatedClaimablePercent = accumulatedClaimablePercent;
+        uint256 claimablePercentForCurentMonth;
+
+        for (uint256 i = claimablePercentIndex; i < unlockEvents.length; i++) {
+            //unlockEvents[i].percent = 4 for 4%
+            uint256 lockedMonthPercent = unlockEvents[i].percent * BP;
+
+            if (block.timestamp > unlockEvents[i].unlockTime) {
+                _accumulatedClaimablePercent += lockedMonthPercent;
+
+            } else {
+                // "i" will always be greater than 0 since unlockEvents[0].unlockTime = start (TGE)
+                // and block.timestamp is always greater than TGE
+                uint256 totalDaysForCurrentMonth = (unlockEvents[i].unlockTime - unlockEvents[i - 1].unlockTime) / 1 days;
+                uint256 daysPassedForCurrentMonth = (block.timestamp - unlockEvents[i - 1].unlockTime) / 1 days;
+
+                claimablePercentForCurentMonth += (lockedMonthPercent * daysPassedForCurrentMonth) / totalDaysForCurrentMonth;
+                break;
+            }
+        }
+
+        uint256 resultPercent = _accumulatedClaimablePercent + claimablePercentForCurentMonth;
+
+        if (resultPercent > 100 * BP) resultPercent = 100 * BP;
+
+        // if 4% then it'll return 4 * BP
+        return resultPercent; 
+    }
+
+    /**
      * @dev Calculates the total Claimable Tokens according to how many days have passed
      * @return The total Claimable Tokens
      */
     function claimableAmount(address _beneficiary)
-        external
-        override
+        public
         view
+        override
         returns (uint256)
     {
-        return _claimableAmount(_beneficiary, unlockedSupply());
+        return _claimableAmount(_beneficiary, claimablePercent());
     }
 
-    function _claimableAmount(address _beneficiary, uint256 supply)
+    function _claimableAmount(address _beneficiary, uint256 __claimablePercent)
         internal
         view
         returns (uint256)
     {
-        if (supply == 0) return 0;
+        return (tokenAmounts[_beneficiary] * __claimablePercent) / (100 * BP) - releasedAmount[_beneficiary];
 
-        uint256 dailyPercentage = (tokenAmounts[_beneficiary] * BP) / supply;
-        uint256 daysPassed = (block.timestamp - start) / 1 days;
-
-        uint256 claimablePercent = daysPassed * dailyPercentage;
-
-        if (claimablePercent > BP) claimablePercent = BP;
-
-        return
-            (tokenAmounts[_beneficiary] * claimablePercent) /
-            BP -
-            releasedAmount[_beneficiary];
     }
 }

@@ -90,6 +90,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "claimablePercent",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "getBeneficiaries",
     outputs: [
       {
@@ -109,7 +122,7 @@ const _abi = [
         components: [
           {
             internalType: "uint256",
-            name: "amount",
+            name: "percent",
             type: "uint256",
           },
           {
@@ -121,19 +134,6 @@ const _abi = [
         internalType: "struct IVesting.UnlockEvent[]",
         name: "",
         type: "tuple[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "unlockedSupply",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
       },
     ],
     stateMutability: "view",

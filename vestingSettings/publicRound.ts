@@ -1,6 +1,5 @@
-import moment from 'moment';
-import { addMonths, toSec, toWei, UnlockEvent } from '../utils';
-
+import moment from "moment";
+import { addMonths, toSec, UnlockEvent } from "../utils";
 
 export const vestingName = `Public Round`;
 
@@ -8,11 +7,11 @@ export const start = toSec(moment());
 
 export const unlockEvents: UnlockEvent[] = [
   {
-    amount: toWei('47500000'),
-    unlockTime: addMonths(start, 1)
+    percent: 50,
+    unlockTime: addMonths(start, 1),
   },
   {
-    amount: toWei('47500000'),
-    unlockTime: addMonths(start, 2)
+    percent: 50,
+    unlockTime: addMonths(start, 2),
   },
 ];

@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 interface IVesting {
   struct UnlockEvent {
-    uint256 amount;
+    uint256 percent;
     uint256 unlockTime;
   }
 
@@ -12,13 +12,13 @@ interface IVesting {
 
   function getUnlockEvents() external view returns (UnlockEvent[] memory);
 
-  function unlockedSupply() external view returns (uint256);
-
   function addBeneficiaries(address[] memory _beneficiaries, uint256[] memory _tokenAmounts) external;
 
   function getBeneficiaries() external view returns (address[] memory);
 
   function claimTokens() external;
+
+  function claimablePercent() external view returns (uint256);
 
   function claimableAmount(address _beneficiary) external view returns (uint256);
 
