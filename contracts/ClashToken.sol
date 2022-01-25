@@ -5,8 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ClashToken is ERC20Pausable, Ownable {
-
-    uint256 constant public MAX_SUPPLY = 5_0000_000_000e18;
+    uint256 public constant MAX_SUPPLY = 5_0000_000_000e18;
 
     constructor(string memory _name, string memory _symbol)
         ERC20(_name, _symbol)
