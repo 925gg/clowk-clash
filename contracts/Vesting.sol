@@ -143,7 +143,11 @@ contract Vesting is IVesting, Ownable {
             "User already released all available tokens"
         );
 
-        (uint256 percent, uint256 _accumulatedClaimablePercent, uint256 _claimablePercentIndex) = _claimablePercent();
+        (
+            uint256 percent,
+            uint256 _accumulatedClaimablePercent,
+            uint256 _claimablePercentIndex
+        ) = _claimablePercent();
         accumulatedClaimablePercent = _accumulatedClaimablePercent;
         claimablePercentIndex = _claimablePercentIndex;
         uint256 unreleased = _claimableAmount(msg.sender, percent);
@@ -162,12 +166,21 @@ contract Vesting is IVesting, Ownable {
      * modifies the contract state so the call doesn't run the for loop from the beggining everytime
      * @return The total Claimable Percent
      */
-    function _claimablePercent() internal view returns (uint256, uint256, uint256) {
+    function _claimablePercent()
+        internal
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         uint256 _accumulatedClaimablePercent = accumulatedClaimablePercent;
         uint256 _claimablePercentIndex = claimablePercentIndex;
 
         // cannot claim before TGE
-        if (block.timestamp < start) return (0, _accumulatedClaimablePercent, _claimablePercentIndex);
+        if (block.timestamp < start)
+            return (0, _accumulatedClaimablePercent, _claimablePercentIndex);
 
         uint256 claimablePercentForCurentMonth;
 
@@ -199,7 +212,11 @@ contract Vesting is IVesting, Ownable {
         if (resultPercent > 100 * BP) resultPercent = 100 * BP;
 
         // if 4% then it'll return 4 * BP
-        return (resultPercent, _accumulatedClaimablePercent, _claimablePercentIndex);
+        return (
+            resultPercent,
+            _accumulatedClaimablePercent,
+            _claimablePercentIndex
+        );
     }
 
     /**
@@ -208,7 +225,7 @@ contract Vesting is IVesting, Ownable {
      * @return The total Claimable Percent
      */
     function claimablePercent() public view override returns (uint256) {
-        (uint percent,,) = _claimablePercent();
+        (uint256 percent, , ) = _claimablePercent();
         return percent;
     }
 
