@@ -33,6 +33,7 @@ describe("Vesting", function () {
   let vesting: Vesting;
   let clashToken: ClashToken;
   let account: string;
+  const blockStartTimestamp = toSec(moment().add(1, "hour"));
 
   it("Should deploy Token", async function () {
     const TokenFactory = await ethers.getContractFactory("ClashToken");
@@ -196,9 +197,7 @@ describe("Vesting", function () {
   });
 
   it("Should get Claimable Amount after some period", async function () {
-    const start = toSec(moment().add(1, "hour"));
-
-    await timeTraveler.setNextBlockTimestamp(start);
+    await timeTraveler.setNextBlockTimestamp(blockStartTimestamp);
 
     const BP = new BigNumber(10).pow(18);
 
@@ -220,7 +219,7 @@ describe("Vesting", function () {
     );
 
     await timeTraveler.setNextBlockTimestamp(
-      addMonths(start, 3) + 15 * 24 * 3600 // current date = month 3 + 15 days
+      addMonths(blockStartTimestamp, 3) + 15 * 24 * 3600 // current date = month 3 + 15 days
     );
 
     const currentClaimablePercent = new BigNumber(
@@ -255,6 +254,42 @@ describe("Vesting", function () {
     expect(currentClaimableAmount.toFixed()).to.be.equal(`0`);
     expect(releasedAmount.toFixed()).to.be.equal(
       previousClaimableAmount.toFixed()
+    );
+  });
+
+  it("Should Claim Tokens 2nd time", async function () {
+    const BP = new BigNumber(10).pow(18);
+
+    await timeTraveler.setNextBlockTimestamp(
+      addMonths(blockStartTimestamp, 5) + 20 * 24 * 3600 // current date = month 5 + 15 days
+    );
+
+    const currentClaimablePercent = new BigNumber(
+      (await vesting.claimablePercent()).toHexString()
+    );
+
+    // For private round 6% is unlocked after month 3. 4% more is unlocked after 20 days corresponding to month
+    expect(currentClaimablePercent.div(BP).toNumber()).to.be.closeTo(26, 1); // 4% + 6% + 6% + 6% + ~4% = ~26%
+
+    const previousClaimableAmount = new BigNumber(
+      (await vesting.claimableAmount(account)).toHexString()
+    );
+    const previousReleasedAmount = new BigNumber(
+      (await vesting.releasedAmount(account)).toHexString()
+    );
+
+    await (await vesting.claimTokens()).wait();
+
+    const currentClaimableAmount = new BigNumber(
+      (await vesting.claimableAmount(account)).toHexString()
+    );
+    const releasedAmount = new BigNumber(
+      (await vesting.releasedAmount(account)).toHexString()
+    );
+
+    expect(currentClaimableAmount.toFixed()).to.be.equal(`0`);
+    expect(releasedAmount.toFixed()).to.be.equal(
+      previousClaimableAmount.plus(previousReleasedAmount).toFixed()
     );
   });
 });
