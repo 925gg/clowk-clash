@@ -162,9 +162,8 @@ contract Vesting is IVesting, Ownable {
 
     /**
      * @dev Calculates the total Claimable Percent according to how many days have passed
-     * @notice This internal function is only called by contract and
-     * modifies the contract state so the call doesn't run the for loop from the beggining everytime
-     * @return The total Claimable Percent
+     * @notice This function doesn't modify the contract state and it's just called for display purposes
+     * @return The total Claimable Percent, accumulated Claimable Percent, claimable Percent Index
      */
     function _claimablePercent()
         internal
