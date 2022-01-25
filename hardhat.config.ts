@@ -30,10 +30,10 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      forking: {
-        url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
-        accounts: [PRIVATE_KEY_TESTNET],
-      },
+      // forking: {
+      //   url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
+      //   accounts: [PRIVATE_KEY_TESTNET],
+      // },
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,

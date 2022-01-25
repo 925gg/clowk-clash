@@ -143,7 +143,10 @@ contract Vesting is IVesting, Ownable {
             "User already released all available tokens"
         );
 
-        uint256 unreleased = _claimableAmount(msg.sender, _claimablePercent());
+        (uint256 percent, uint256 _accumulatedClaimablePercent, uint256 _claimablePercentIndex) = _claimablePercent();
+        accumulatedClaimablePercent = _accumulatedClaimablePercent;
+        claimablePercentIndex = _claimablePercentIndex;
+        uint256 unreleased = _claimableAmount(msg.sender, percent);
 
         if (unreleased > 0) {
             released += unreleased;
@@ -159,18 +162,21 @@ contract Vesting is IVesting, Ownable {
      * modifies the contract state so the call doesn't run the for loop from the beggining everytime
      * @return The total Claimable Percent
      */
-    function _claimablePercent() internal returns (uint256) {
+    function _claimablePercent() internal view returns (uint256, uint256, uint256) {
+        uint256 _accumulatedClaimablePercent = accumulatedClaimablePercent;
+        uint256 _claimablePercentIndex = claimablePercentIndex;
+
         // cannot claim before TGE
-        if (block.timestamp < start) return 0;
+        if (block.timestamp < start) return (0, _accumulatedClaimablePercent, _claimablePercentIndex);
 
         uint256 claimablePercentForCurentMonth;
 
-        for (uint256 i = claimablePercentIndex; i < unlockEvents.length; i++) {
+        for (uint256 i = _claimablePercentIndex; i < unlockEvents.length; i++) {
             //unlockEvents[i].percent = 4 for 4%
             uint256 lockedMonthPercent = unlockEvents[i].percent * BP;
 
             if (block.timestamp > unlockEvents[i].unlockTime) {
-                accumulatedClaimablePercent += lockedMonthPercent;
+                _accumulatedClaimablePercent += lockedMonthPercent;
             } else {
                 // "i" will always be greater than 0 since unlockEvents[0].unlockTime = start
                 uint256 totalDaysForCurrentMonth = (unlockEvents[i].unlockTime -
@@ -182,49 +188,7 @@ contract Vesting is IVesting, Ownable {
                     (lockedMonthPercent * daysPassedForCurrentMonth) /
                     totalDaysForCurrentMonth;
 
-                claimablePercentIndex = i;
-                break;
-            }
-        }
-
-        uint256 resultPercent = accumulatedClaimablePercent +
-            claimablePercentForCurentMonth;
-
-        if (resultPercent > 100 * BP) resultPercent = 100 * BP;
-
-        // if 4% then it'll return 4 * BP
-        return resultPercent;
-    }
-
-    /**
-     * @dev Calculates the total Claimable Percent according to how many days have passed
-     * @notice This function doesn't modify the contract state and it's just called for display purposes
-     * @return The total Claimable Percent
-     */
-    function claimablePercent() public view override returns (uint256) {
-        // cannot claim before TGE
-        if (block.timestamp < start) return 0;
-
-        uint256 _accumulatedClaimablePercent = accumulatedClaimablePercent;
-        uint256 claimablePercentForCurentMonth;
-
-        for (uint256 i = claimablePercentIndex; i < unlockEvents.length; i++) {
-            //unlockEvents[i].percent = 4 for 4%
-            uint256 lockedMonthPercent = unlockEvents[i].percent * BP;
-
-            if (block.timestamp > unlockEvents[i].unlockTime) {
-                _accumulatedClaimablePercent += lockedMonthPercent;
-            } else {
-                // "i" will always be greater than 0 since unlockEvents[0].unlockTime = start (TGE)
-                // and block.timestamp is always greater than TGE
-                uint256 totalDaysForCurrentMonth = (unlockEvents[i].unlockTime -
-                    unlockEvents[i - 1].unlockTime) / 1 days;
-                uint256 daysPassedForCurrentMonth = (block.timestamp -
-                    unlockEvents[i - 1].unlockTime) / 1 days;
-
-                claimablePercentForCurentMonth +=
-                    (lockedMonthPercent * daysPassedForCurrentMonth) /
-                    totalDaysForCurrentMonth;
+                _claimablePercentIndex = i;
                 break;
             }
         }
@@ -235,7 +199,17 @@ contract Vesting is IVesting, Ownable {
         if (resultPercent > 100 * BP) resultPercent = 100 * BP;
 
         // if 4% then it'll return 4 * BP
-        return resultPercent;
+        return (resultPercent, _accumulatedClaimablePercent, _claimablePercentIndex);
+    }
+
+    /**
+     * @dev Calculates the total Claimable Percent according to how many days have passed
+     * @notice This function doesn't modify the contract state and it's just called for display purposes
+     * @return The total Claimable Percent
+     */
+    function claimablePercent() public view override returns (uint256) {
+        (uint percent,,) = _claimablePercent();
+        return percent;
     }
 
     /**
