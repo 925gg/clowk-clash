@@ -199,7 +199,7 @@ describe("Vesting", function () {
   });
 
   it("Should get Claimable Amount after some period", async function () {
-    const start = toSec(moment());
+    const start = toSec(moment().add(1, "hour"));
 
     await timeTraveler.setNextBlockTimestamp(start);
 
