@@ -71,10 +71,7 @@ describe("Vesting", function () {
     let errorMessage = "";
 
     try {
-      await vesting.addUnlockEvents(
-        [toWei("24000000"), toWei("24000000")],
-        [Math.round(Date.now() / 1000)]
-      );
+      await vesting.addUnlockEvents([4, 5], [Math.round(Date.now() / 1000)]);
     } catch (err: any) {
       errorMessage = errorReason(err.message);
     }
