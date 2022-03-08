@@ -6,29 +6,28 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IVesting.sol";
+import "hardhat/console.sol";
 
 contract Vesting is IVesting, Ownable {
     using SafeERC20 for IERC20;
 
-    UnlockEvent[] internal unlockEvents;
+    UnlockEvent[] private _unlockEvents;
 
     IERC20 public token;
     uint256 public start;
 
-    // uint256 public unlockedSupplyIndex;
-    // uint256 public accumulatedUnlockedSupply;
-
     uint256 public claimablePercentIndex;
     uint256 public accumulatedClaimablePercent;
+    uint256 private _assigned;
 
     mapping(address => uint256) public tokenAmounts;
     mapping(address => uint256) public releasedAmount;
 
-    uint256 internal released;
+    uint256 private _released;
     uint256 private constant BP = 1e18;
     string public vestingName;
 
-    address[] public beneficiaries;
+    address[] private _beneficiaries;
 
     /**
      * @param _token The token address.
@@ -47,32 +46,32 @@ contract Vesting is IVesting, Ownable {
 
     /**
      * @dev Adds the Vesting Schedule Configuration
-     * @param _percent The Unlock Percent.
-     * @param _unlockTime The Unlock Time.
+     * @param percent The Unlock Percent.
+     * @param unlockTime The Unlock Time.
      */
     function addUnlockEvents(
-        uint256[] memory _percent,
-        uint256[] memory _unlockTime
-    ) external onlyOwner {
-        require(_percent.length == _unlockTime.length, "Invalid params");
-        if (unlockEvents.length > 0)
-            require(start == _unlockTime[0], "Unlock time must start from TGE");
+        uint256[] memory percent,
+        uint256[] memory unlockTime
+    ) external override onlyOwner {
+        require(percent.length == unlockTime.length, "Invalid params");
+        if (_unlockEvents.length > 0)
+            require(start == unlockTime[0], "Unlock time must start from TGE");
 
-        for (uint256 i = 0; i < _percent.length; i++) {
+        for (uint256 i = 0; i < percent.length; i++) {
             if (i > 0) {
                 require(
-                    _unlockTime[i] > _unlockTime[i - 1],
+                    unlockTime[i] > unlockTime[i - 1],
                     "Unlock time has to be in order"
                 );
             }
 
-            _addUnlockEvent(_percent[i], _unlockTime[i]);
+            _addUnlockEvent(percent[i], unlockTime[i]);
         }
     }
 
-    function _addUnlockEvent(uint256 _percent, uint256 _unlockTime) internal {
-        unlockEvents.push(
-            UnlockEvent({percent: _percent, unlockTime: _unlockTime})
+    function _addUnlockEvent(uint256 percent, uint256 unlockTime) private {
+        _unlockEvents.push(
+            UnlockEvent({percent: percent, unlockTime: unlockTime})
         );
     }
 
@@ -86,40 +85,45 @@ contract Vesting is IVesting, Ownable {
         override
         returns (UnlockEvent[] memory)
     {
-        return unlockEvents;
+        return _unlockEvents;
     }
 
     /**
      * @dev Adds Beneficiaries addresses and amounts
      */
     function addBeneficiaries(
-        address[] memory _beneficiaries,
-        uint256[] memory _tokenAmounts
+        address[] memory beneficiaries,
+        uint256[] memory amounts
     ) external override onlyOwner {
-        require(
-            _beneficiaries.length == _tokenAmounts.length,
-            "Invalid params"
-        );
+        require(beneficiaries.length == amounts.length, "Invalid params");
 
-        for (uint256 i = 0; i < _beneficiaries.length; i++) {
-            _addBeneficiary(_beneficiaries[i], _tokenAmounts[i]);
+        uint256 total = _assigned;
+        console.log("Assigned:", total);
+
+        for (uint256 i = 0; i < beneficiaries.length; i++) {
+            total += amounts[i];
+            _addBeneficiary(beneficiaries[i], amounts[i]);
         }
+
+        uint256 balance = token.balanceOf(address(this));
+        uint256 abc = balance + _released;
+        bool ok = abc > total;
+        require(ok, "Insufficient Funds");
+        _assigned = total;
     }
 
-    function _addBeneficiary(address _beneficiary, uint256 _tokenAmount)
-        internal
-    {
+    function _addBeneficiary(address beneficiary, uint256 tokenAmount) private {
         require(
-            _beneficiary != address(0),
+            beneficiary != address(0),
             "The beneficiary's address cannot be 0"
         );
-        require(_tokenAmount > 0, "Amount has to be greater than 0");
+        require(tokenAmount > 0, "Amount has to be greater than 0");
 
-        if (tokenAmounts[_beneficiary] == 0) {
-            beneficiaries.push(_beneficiary);
+        if (tokenAmounts[beneficiary] == 0) {
+            _beneficiaries.push(beneficiary);
         }
 
-        tokenAmounts[_beneficiary] = tokenAmounts[_beneficiary] + _tokenAmount;
+        tokenAmounts[beneficiary] = tokenAmounts[beneficiary] + tokenAmount;
     }
 
     /**
@@ -132,7 +136,7 @@ contract Vesting is IVesting, Ownable {
         override
         returns (address[] memory)
     {
-        return beneficiaries;
+        return _beneficiaries;
     }
 
     /**
@@ -155,7 +159,7 @@ contract Vesting is IVesting, Ownable {
         uint256 unreleased = _claimableAmount(msg.sender, percent);
 
         if (unreleased > 0) {
-            released += unreleased;
+            _released += unreleased;
             token.safeTransfer(msg.sender, unreleased);
             releasedAmount[msg.sender] += unreleased;
             emit Released(msg.sender, unreleased);
@@ -168,7 +172,7 @@ contract Vesting is IVesting, Ownable {
      * @return The total Claimable Percent, accumulated Claimable Percent, claimable Percent Index
      */
     function _claimablePercent()
-        internal
+        private
         view
         returns (
             uint256,
@@ -185,18 +189,22 @@ contract Vesting is IVesting, Ownable {
 
         uint256 claimablePercentForCurentPeriod;
 
-        for (uint256 i = _claimablePercentIndex; i < unlockEvents.length; i++) {
+        for (
+            uint256 i = _claimablePercentIndex;
+            i < _unlockEvents.length;
+            i++
+        ) {
             //unlockEvents[i].percent = 4 for 4%
-            uint256 lockedPeriodPercent = unlockEvents[i].percent * BP;
+            uint256 lockedPeriodPercent = _unlockEvents[i].percent * BP;
 
-            if (block.timestamp > unlockEvents[i].unlockTime) {
+            if (block.timestamp > _unlockEvents[i].unlockTime) {
                 _accumulatedClaimablePercent += lockedPeriodPercent;
             } else {
                 // "i" will always be greater than 0 since unlockEvents[0].unlockTime = start
-                uint256 totalDaysForCurrentPeriod = (unlockEvents[i]
-                    .unlockTime - unlockEvents[i - 1].unlockTime) / 1 days;
+                uint256 totalDaysForCurrentPeriod = (_unlockEvents[i]
+                    .unlockTime - _unlockEvents[i - 1].unlockTime) / 1 days;
                 uint256 daysPassedForCurrentPeriod = (block.timestamp -
-                    unlockEvents[i - 1].unlockTime) / 1 days;
+                    _unlockEvents[i - 1].unlockTime) / 1 days;
 
                 claimablePercentForCurentPeriod +=
                     (lockedPeriodPercent * daysPassedForCurrentPeriod) /
@@ -234,23 +242,23 @@ contract Vesting is IVesting, Ownable {
      * @dev Calculates the total Claimable Tokens according to how many days have passed
      * @return The total Claimable Tokens
      */
-    function claimableAmount(address _beneficiary)
+    function claimableAmount(address beneficiary)
         public
         view
         override
         returns (uint256)
     {
-        return _claimableAmount(_beneficiary, claimablePercent());
+        return _claimableAmount(beneficiary, claimablePercent());
     }
 
-    function _claimableAmount(address _beneficiary, uint256 __claimablePercent)
-        internal
+    function _claimableAmount(address beneficiary, uint256 percent)
+        private
         view
         returns (uint256)
     {
         return
-            (tokenAmounts[_beneficiary] * __claimablePercent) /
+            (tokenAmounts[beneficiary] * percent) /
             (100 * BP) -
-            releasedAmount[_beneficiary];
+            releasedAmount[beneficiary];
     }
 }

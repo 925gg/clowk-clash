@@ -8,6 +8,7 @@ import {
   addMonths,
   availableConfigFiles,
   errorReason,
+  getErrorMessage,
   toSec,
   toWei,
   UnlockEvent,
@@ -19,6 +20,7 @@ import BigNumber from "bignumber.js";
 import moment from "moment";
 // eslint-disable-next-line node/no-missing-import
 import { ClashToken, Vesting } from "../typechain-types";
+import { assert } from "console";
 
 // chai.use(solidity);
 
@@ -183,7 +185,7 @@ describe("Vesting", function () {
 
     await (await vesting.addBeneficiaries([account], [amount])).wait(1);
 
-    const beneficiary = await vesting.beneficiaries(0);
+    const beneficiary = (await vesting.getBeneficiaries())[0];
     const tokenAmount = await vesting.tokenAmounts(beneficiary);
 
     expect(beneficiary).to.equal(account);
@@ -310,5 +312,20 @@ describe("Vesting", function () {
 
     const claimablePercent = await vesting2.claimablePercent();
     expect(claimablePercent).to.be.equal(0);
+  });
+
+  it("Should not add beneficaries that contract cannot cover", async function () {
+    let errorThrown = false;
+    const more = toWei(`600000000`);
+    console.log(account);
+    account = await ethers.provider.getSigner().getAddress();
+    console.log(account);
+    try {
+      await vesting.addBeneficiaries([account], [more]);
+    } catch (err: any) {
+      expect(getErrorMessage(err)).to.eq("Insufficient Funds");
+      errorThrown = true;
+    }
+    assert(errorThrown);
   });
 });

@@ -45,3 +45,11 @@ export const availableConfigFiles = [
   "team",
   "treasury",
 ];
+
+export const getErrorMessage = (err: Error) => {
+  const message = err.message?.replace(
+    "VM Exception while processing transaction: reverted with reason string '",
+    ""
+  );
+  return message.substring(0, message.length - 1);
+};
