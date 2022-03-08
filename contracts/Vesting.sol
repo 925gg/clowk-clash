@@ -53,8 +53,10 @@ contract Vesting is IVesting, Ownable {
     function addUnlockEvents(
         uint256[] memory _percent,
         uint256[] memory _unlockTime
-    ) external override onlyOwner {
+    ) external onlyOwner {
         require(_percent.length == _unlockTime.length, "Invalid params");
+        if (unlockEvents.length > 0)
+            require(start == _unlockTime[0], "Unlock time must start from TGE");
 
         for (uint256 i = 0; i < _percent.length; i++) {
             if (i > 0) {
@@ -64,11 +66,11 @@ contract Vesting is IVesting, Ownable {
                 );
             }
 
-            addUnlockEvent(_percent[i], _unlockTime[i]);
+            _addUnlockEvent(_percent[i], _unlockTime[i]);
         }
     }
 
-    function addUnlockEvent(uint256 _percent, uint256 _unlockTime) internal {
+    function _addUnlockEvent(uint256 _percent, uint256 _unlockTime) internal {
         unlockEvents.push(
             UnlockEvent({percent: _percent, unlockTime: _unlockTime})
         );
@@ -100,11 +102,11 @@ contract Vesting is IVesting, Ownable {
         );
 
         for (uint256 i = 0; i < _beneficiaries.length; i++) {
-            addBeneficiary(_beneficiaries[i], _tokenAmounts[i]);
+            _addBeneficiary(_beneficiaries[i], _tokenAmounts[i]);
         }
     }
 
-    function addBeneficiary(address _beneficiary, uint256 _tokenAmount)
+    function _addBeneficiary(address _beneficiary, uint256 _tokenAmount)
         internal
     {
         require(
