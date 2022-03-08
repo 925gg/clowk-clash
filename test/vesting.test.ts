@@ -33,7 +33,7 @@ describe("Vesting", function () {
   let vesting: Vesting;
   let clashToken: ClashToken;
   let account: string;
-  const blockStartTimestamp = toSec(moment().add(2, "hour"));
+  const blockStartTimestamp = toSec(moment().add(1, "hour"));
 
   it("Should deploy Token", async function () {
     const TokenFactory = await ethers.getContractFactory("ClashToken");
@@ -66,11 +66,6 @@ describe("Vesting", function () {
 
     await vesting.deployed();
     console.log(`Vesting ${vestingName} deployed: ${vesting.address}`);
-  });
-
-  it("Should not get claimable amount befor TGE", async function () {
-    const claimablePercent = await vesting.claimablePercent();
-    expect(claimablePercent.toNumber()).to.be.equal(0);
   });
 
   it("Should fail adding Wrong Lock Events total Params", async function () {
