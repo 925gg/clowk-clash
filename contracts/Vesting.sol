@@ -18,6 +18,7 @@ contract Vesting is IVesting, Ownable {
     uint256 public claimablePercentIndex;
     uint256 public accumulatedClaimablePercent;
     uint256 private _assigned;
+    uint256 private _totalUnlockedPercent;
 
     mapping(address => uint256) public tokenAmounts;
     mapping(address => uint256) public releasedAmount;
@@ -52,10 +53,19 @@ contract Vesting is IVesting, Ownable {
         uint256[] memory percent,
         uint256[] memory unlockTime
     ) external override onlyOwner {
-        require(percent.length == unlockTime.length, "Invalid params");
-        if (_unlockEvents.length > 0)
+        require(
+            percent.length == unlockTime.length && percent.length > 0,
+            "Invalid params"
+        );
+        if (_unlockEvents.length == 0) {
             require(start == unlockTime[0], "Unlock time must start from TGE");
-
+        } else
+            require(
+                _unlockEvents[_unlockEvents.length - 1].unlockTime <
+                    unlockTime[0],
+                "Unlock time has to be in order"
+            );
+        uint256 totalUnlockedPercent = _totalUnlockedPercent;
         for (uint256 i = 0; i < percent.length; i++) {
             if (i > 0) {
                 require(
@@ -64,8 +74,15 @@ contract Vesting is IVesting, Ownable {
                 );
             }
 
+            require(
+                totalUnlockedPercent + percent[i] <= 100,
+                "Invalid percent values"
+            );
+
             _addUnlockEvent(percent[i], unlockTime[i]);
+            totalUnlockedPercent += percent[i];
         }
+        _totalUnlockedPercent = totalUnlockedPercent;
     }
 
     function _addUnlockEvent(uint256 percent, uint256 unlockTime) private {

@@ -8,7 +8,6 @@ import {
   addMonths,
   availableConfigFiles,
   errorReason,
-  getErrorMessage,
   toSec,
   toWei,
   UnlockEvent,
@@ -84,17 +83,23 @@ describe("Vesting", function () {
 
   it("Should fail adding Lock Events in Wrong order", async function () {
     let errorMessage = "";
-
-    const start = toSec(moment());
+    // eslint-disable-next-line node/no-unsupported-features/es-syntax
+    const { start } = (await import(
+      `../vestingSettings/${CONFIG_FILE}`
+    )) as VestingSettings;
 
     const unlockEvents: UnlockEvent[] = [
+      {
+        percent: 7,
+        unlockTime: addMonths(start, 1),
+      },
       {
         percent: 5,
         unlockTime: addMonths(start, 3),
       },
       {
         percent: 4,
-        unlockTime: addMonths(start, 1),
+        unlockTime: addMonths(start, 2),
       },
     ];
 
@@ -110,6 +115,32 @@ describe("Vesting", function () {
     expect(errorMessage).to.be.equal("Unlock time has to be in order");
   });
 
+  it("Should fail adding Lock Events not starting with TGE", async function () {
+    let errorMessage = "";
+    // eslint-disable-next-line node/no-unsupported-features/es-syntax
+    const { start } = (await import(
+      `../vestingSettings/${CONFIG_FILE}`
+    )) as VestingSettings;
+
+    const unlockEvents: UnlockEvent[] = [
+      {
+        percent: 5,
+        unlockTime: addMonths(start, 2),
+      },
+    ];
+
+    try {
+      await vesting.addUnlockEvents(
+        unlockEvents.map((e) => e.percent),
+        unlockEvents.map((e) => e.unlockTime)
+      );
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+
+    expect(errorMessage).to.be.equal("Unlock time must start from TGE");
+  });
+
   it("Should add Unlock Events", async function () {
     // eslint-disable-next-line node/no-unsupported-features/es-syntax
     const { unlockEvents } = (await import(
@@ -122,6 +153,63 @@ describe("Vesting", function () {
         unlockEvents.map((e) => e.unlockTime)
       )
     ).wait(1);
+  });
+
+  it("Should fail adding Lock Events with unlock time not greater than previously added ones", async function () {
+    let errorMessage = "";
+
+    // eslint-disable-next-line node/no-unsupported-features/es-syntax
+    const { unlockEvents } = (await import(
+      `../vestingSettings/${CONFIG_FILE}`
+    )) as VestingSettings;
+
+    const invalidEvents: UnlockEvent[] = [
+      {
+        percent: 8,
+        unlockTime: unlockEvents[unlockEvents.length - 1].unlockTime,
+      },
+    ];
+
+    try {
+      await vesting.addUnlockEvents(
+        invalidEvents.map((e) => e.percent),
+        invalidEvents.map((e) => e.unlockTime)
+      );
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+
+    expect(errorMessage).to.be.equal("Unlock time has to be in order");
+  });
+
+  it("Should fail adding Lock Events with total percent greater than 100", async function () {
+    let errorMessage = "";
+    // eslint-disable-next-line node/no-unsupported-features/es-syntax
+    const { start } = (await import(
+      `../vestingSettings/${CONFIG_FILE}`
+    )) as VestingSettings;
+
+    const invalidEvents: UnlockEvent[] = [
+      {
+        percent: 8,
+        unlockTime: addMonths(start, 22),
+      },
+      // {
+      //   percent: 95,
+      //   unlockTime: addMonths(start, 12),
+      // },
+    ];
+
+    try {
+      await vesting.addUnlockEvents(
+        invalidEvents.map((e) => e.percent),
+        invalidEvents.map((e) => e.unlockTime)
+      );
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+
+    expect(errorMessage).to.be.equal("Invalid percent values");
   });
 
   it("Should get Unlock Events", async function () {
@@ -323,7 +411,7 @@ describe("Vesting", function () {
     try {
       await vesting.addBeneficiaries([account], [more]);
     } catch (err: any) {
-      expect(getErrorMessage(err)).to.eq("Insufficient Funds");
+      expect(errorReason(err.message)).to.eq("Insufficient Funds");
       errorThrown = true;
     }
     assert(errorThrown);
