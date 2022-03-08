@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IVesting.sol";
-import "hardhat/console.sol";
 
 contract Vesting is IVesting, Ownable {
     using SafeERC20 for IERC20;
@@ -98,7 +97,6 @@ contract Vesting is IVesting, Ownable {
         require(beneficiaries.length == amounts.length, "Invalid params");
 
         uint256 total = _assigned;
-        console.log("Assigned:", total);
 
         for (uint256 i = 0; i < beneficiaries.length; i++) {
             total += amounts[i];
