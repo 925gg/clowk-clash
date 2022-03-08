@@ -10,24 +10,21 @@ import "./interfaces/IVesting.sol";
 contract Vesting is IVesting, Ownable {
     using SafeERC20 for IERC20;
 
-    UnlockEvent[] private _unlockEvents;
-
     IERC20 public token;
     uint256 public start;
-
     uint256 public claimablePercentIndex;
     uint256 public accumulatedClaimablePercent;
-    uint256 private _assigned;
-    uint256 private _totalUnlockedPercent;
+    string public vestingName;
 
     mapping(address => uint256) public tokenAmounts;
     mapping(address => uint256) public releasedAmount;
 
-    uint256 private _released;
     uint256 private constant BP = 1e18;
-    string public vestingName;
-
+    UnlockEvent[] private _unlockEvents;
+    uint256 private _totalUnlockedPercent;
     address[] private _beneficiaries;
+    uint256 private _assigned;
+    uint256 private _released;
 
     /**
      * @param _token The token address.
@@ -59,12 +56,13 @@ contract Vesting is IVesting, Ownable {
         );
         if (_unlockEvents.length == 0) {
             require(start == unlockTime[0], "Unlock time must start from TGE");
-        } else
+        } else {
             require(
                 _unlockEvents[_unlockEvents.length - 1].unlockTime <
                     unlockTime[0],
                 "Unlock time has to be in order"
             );
+        }
         uint256 totalUnlockedPercent = _totalUnlockedPercent;
         for (uint256 i = 0; i < percent.length; i++) {
             if (i > 0) {
@@ -113,18 +111,18 @@ contract Vesting is IVesting, Ownable {
     ) external override onlyOwner {
         require(beneficiaries.length == amounts.length, "Invalid params");
 
-        uint256 total = _assigned;
-
+        uint256 newAssigned = 0;
         for (uint256 i = 0; i < beneficiaries.length; i++) {
-            total += amounts[i];
+            newAssigned += amounts[i];
             _addBeneficiary(beneficiaries[i], amounts[i]);
         }
 
         uint256 balance = token.balanceOf(address(this));
-        uint256 abc = balance + _released;
-        bool ok = abc > total;
-        require(ok, "Insufficient Funds");
-        _assigned = total;
+        require(
+            balance >= _assigned - _released + newAssigned,
+            "Insufficient Funds"
+        );
+        _assigned += newAssigned;
     }
 
     function _addBeneficiary(address beneficiary, uint256 tokenAmount) private {

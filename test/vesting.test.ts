@@ -19,7 +19,6 @@ import BigNumber from "bignumber.js";
 import moment from "moment";
 // eslint-disable-next-line node/no-missing-import
 import { ClashToken, Vesting } from "../typechain-types";
-import { assert } from "console";
 
 // chai.use(solidity);
 
@@ -402,18 +401,18 @@ describe("Vesting", function () {
     expect(claimablePercent).to.be.equal(0);
   });
 
-  it("Should not add beneficaries that contract cannot cover", async function () {
-    let errorThrown = false;
-    const more = toWei(`600000000`);
-    console.log(account);
-    account = await ethers.provider.getSigner().getAddress();
-    console.log(account);
+  it("Should not add beneficiaries that contract cannot cover", async function () {
+    let errorMessage = "";
     try {
+      const more = toWei(`600000000`);
+      const balance = await clashToken.balanceOf(vesting.address);
+      console.log("balance", balance);
       await vesting.addBeneficiaries([account], [more]);
+      console.log("2");
     } catch (err: any) {
-      expect(errorReason(err.message)).to.eq("Insufficient Funds");
-      errorThrown = true;
+      errorMessage = errorReason(err.message);
     }
-    assert(errorThrown);
+    console.log("asa", errorMessage);
+    expect(errorMessage).to.eq("Insufficient Funds");
   });
 });
