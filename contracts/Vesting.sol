@@ -46,9 +46,9 @@ contract Vesting is IVesting, Ownable {
     }
 
     /**
-     * @dev Adds the Vesting Schedule Configuration month by month
+     * @dev Adds the Vesting Schedule Configuration
      * @param _percent The Unlock Percent.
-     * @param _unlockTime The Unlock Time (The month in timestamp).
+     * @param _unlockTime The Unlock Time.
      */
     function addUnlockEvents(
         uint256[] memory _percent,
@@ -181,24 +181,24 @@ contract Vesting is IVesting, Ownable {
         if (block.timestamp < start)
             return (0, _accumulatedClaimablePercent, _claimablePercentIndex);
 
-        uint256 claimablePercentForCurentMonth;
+        uint256 claimablePercentForCurentPeriod;
 
         for (uint256 i = _claimablePercentIndex; i < unlockEvents.length; i++) {
             //unlockEvents[i].percent = 4 for 4%
-            uint256 lockedMonthPercent = unlockEvents[i].percent * BP;
+            uint256 lockedPeriodPercent = unlockEvents[i].percent * BP;
 
             if (block.timestamp > unlockEvents[i].unlockTime) {
-                _accumulatedClaimablePercent += lockedMonthPercent;
+                _accumulatedClaimablePercent += lockedPeriodPercent;
             } else {
                 // "i" will always be greater than 0 since unlockEvents[0].unlockTime = start
-                uint256 totalDaysForCurrentMonth = (unlockEvents[i].unlockTime -
-                    unlockEvents[i - 1].unlockTime) / 1 days;
-                uint256 daysPassedForCurrentMonth = (block.timestamp -
+                uint256 totalDaysForCurrentPeriod = (unlockEvents[i]
+                    .unlockTime - unlockEvents[i - 1].unlockTime) / 1 days;
+                uint256 daysPassedForCurrentPeriod = (block.timestamp -
                     unlockEvents[i - 1].unlockTime) / 1 days;
 
-                claimablePercentForCurentMonth +=
-                    (lockedMonthPercent * daysPassedForCurrentMonth) /
-                    totalDaysForCurrentMonth;
+                claimablePercentForCurentPeriod +=
+                    (lockedPeriodPercent * daysPassedForCurrentPeriod) /
+                    totalDaysForCurrentPeriod;
 
                 _claimablePercentIndex = i;
                 break;
@@ -206,7 +206,7 @@ contract Vesting is IVesting, Ownable {
         }
 
         uint256 resultPercent = _accumulatedClaimablePercent +
-            claimablePercentForCurentMonth;
+            claimablePercentForCurentPeriod;
 
         if (resultPercent > 100 * BP) resultPercent = 100 * BP;
 
