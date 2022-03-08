@@ -292,4 +292,23 @@ describe("Vesting", function () {
       previousClaimableAmount.plus(previousReleasedAmount).toFixed()
     );
   });
+
+  it("Should not get claimable amount before TGE", async function () {
+    const start2 = toSec(moment().add(1, "year"));
+    const vestingName = "Vesting 2";
+    // We get the contract to deploy
+    const VestingFactory = await ethers.getContractFactory("Vesting");
+    const vesting2 = (await VestingFactory.deploy(
+      TOKEN_ADDRESS,
+      start2,
+      vestingName
+    )) as Vesting;
+
+    await vesting2.deployed();
+    console.log(`Vesting ${vestingName} deployed: ${vesting2.address}`);
+    await vesting2.addUnlockEvents([100], [addMonths(start2, 1)]);
+
+    const claimablePercent = await vesting2.claimablePercent();
+    expect(claimablePercent).to.be.equal(0);
+  });
 });
