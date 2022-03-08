@@ -4,7 +4,7 @@ import { addMonths, toSec, UnlockEvent } from "../utils";
 
 export const vestingName = `Private Round`;
 
-export const start = toSec(moment());
+export const start = toSec(moment().add(1, "hour"));
 
 const unlockEvents: UnlockEvent[] = [
   {

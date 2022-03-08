@@ -12,6 +12,6 @@
     "types": ["mocha", "chai"]
   },
   "exclude": ["dist", "node_modules"],
-  "include": ["./test", "./src", "./scripts", "./typechain"],
+  "include": ["./test", "./src", "./scripts", "./typechain-types"],
   "files": ["./hardhat.config.ts"]
 }
