@@ -1,6 +1,4 @@
 import { expect } from "chai";
-// import chai from "chai";
-// import { web3 } from "hardhat";
 import hre, { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
 import TimeTraveler from "../TimeTraveler";
@@ -15,12 +13,9 @@ import {
   // eslint-disable-next-line node/no-missing-import
 } from "../utils";
 import BigNumber from "bignumber.js";
-// import { solidity } from "ethereum-waffle";
 import moment from "moment";
 // eslint-disable-next-line node/no-missing-import
 import { ClashToken, Vesting } from "../typechain-types";
-
-// chai.use(solidity);
 
 const timeTraveler = new TimeTraveler(hre.network.provider);
 
@@ -348,9 +343,8 @@ describe("Vesting", function () {
 
   it("Should Claim Tokens 2nd time", async function () {
     const BP = new BigNumber(10).pow(18);
-
     await timeTraveler.setNextBlockTimestamp(
-      addMonths(blockStartTimestamp, 5) + 20 * 24 * 3600 // current date = month 5 + 15 days
+      addMonths(blockStartTimestamp, 5) + 20 * 24 * 3600 // current date = month 5 + 20 days
     );
 
     const currentClaimablePercent = new BigNumber(
@@ -380,6 +374,26 @@ describe("Vesting", function () {
     expect(releasedAmount.toFixed()).to.be.equal(
       previousClaimableAmount.plus(previousReleasedAmount).toFixed()
     );
+
+    await timeTraveler.setNextBlockTimestamp(
+      addMonths(blockStartTimestamp, 6) + 1 * 24 * 3600 // current date = month 6 + 1 day
+    );
+
+    const nextClaimablePercent = new BigNumber(
+      (await vesting.claimablePercent()).toHexString()
+    );
+    expect(nextClaimablePercent.div(BP).toNumber()).to.be.closeTo(28, 1); // 4% + 6% + 6% + 6% + ~6% = ~28%
+  });
+
+  it("Should not add beneficiaries that contract cannot cover", async function () {
+    let errorMessage = "";
+    try {
+      const more = toWei(`600000000`);
+      await vesting.addBeneficiaries([account], [more]);
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+    expect(errorMessage).to.eq("Not enough token to cover");
   });
 
   it("Should not get claimable amount before TGE", async function () {
@@ -399,20 +413,5 @@ describe("Vesting", function () {
 
     const claimablePercent = await vesting2.claimablePercent();
     expect(claimablePercent).to.be.equal(0);
-  });
-
-  it("Should not add beneficiaries that contract cannot cover", async function () {
-    let errorMessage = "";
-    try {
-      const more = toWei(`600000000`);
-      const balance = await clashToken.balanceOf(vesting.address);
-      console.log("balance", balance);
-      await vesting.addBeneficiaries([account], [more]);
-      console.log("2");
-    } catch (err: any) {
-      errorMessage = errorReason(err.message);
-    }
-    console.log("asa", errorMessage);
-    expect(errorMessage).to.eq("Insufficient Funds");
   });
 });

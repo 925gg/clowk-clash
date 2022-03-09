@@ -72,13 +72,10 @@ contract Vesting is IVesting, Ownable {
                 );
             }
 
-            require(
-                totalUnlockedPercent + percent[i] <= 100,
-                "Invalid percent values"
-            );
+            totalUnlockedPercent += percent[i];
+            require(totalUnlockedPercent <= 100, "Invalid percent values");
 
             _addUnlockEvent(percent[i], unlockTime[i]);
-            totalUnlockedPercent += percent[i];
         }
         _totalUnlockedPercent = totalUnlockedPercent;
     }
@@ -113,14 +110,14 @@ contract Vesting is IVesting, Ownable {
 
         uint256 newAssigned = 0;
         for (uint256 i = 0; i < beneficiaries.length; i++) {
-            newAssigned += amounts[i];
             _addBeneficiary(beneficiaries[i], amounts[i]);
+            newAssigned += amounts[i];
         }
 
         uint256 balance = token.balanceOf(address(this));
         require(
             balance >= _assigned - _released + newAssigned,
-            "Insufficient Funds"
+            "Not enough token to cover"
         );
         _assigned += newAssigned;
     }
