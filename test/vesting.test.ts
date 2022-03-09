@@ -31,18 +31,18 @@ describe("Vesting", function () {
   const blockStartTimestamp = toSec(moment().add(1, "hour"));
 
   it("Should deploy Token", async function () {
+    account = await ethers.provider.getSigner().getAddress();
     const TokenFactory = await ethers.getContractFactory("ClashToken");
     clashToken = (await TokenFactory.deploy(
       "Chibi Clash",
-      "CLASH"
+      "CLASH",
+      account
     )) as ClashToken;
 
     await clashToken.deployed();
     console.log("Token deployed:", clashToken.address);
 
     TOKEN_ADDRESS = clashToken.address;
-
-    account = await ethers.provider.getSigner().getAddress();
   });
 
   it("Should deploy Vesting", async function () {
