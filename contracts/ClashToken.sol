@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -14,5 +15,15 @@ contract ClashToken is ERC20, Ownable {
         address treasury
     ) ERC20(_name, _symbol) {
         _mint(treasury, MAX_SUPPLY);
+    }
+
+    /**
+     * withdraw ERC20 tokens in case of accidentally transfer - owner only
+     */
+    function withdrawAllERC20(IERC20 erc20Token) external onlyOwner {
+        uint256 balance = erc20Token.balanceOf(address(this));
+        require(balance > 0, "Balance must be greater than 0");
+
+        erc20Token.transfer(owner(), balance);
     }
 }

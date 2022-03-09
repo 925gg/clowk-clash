@@ -177,6 +177,16 @@ contract Vesting is IVesting, Ownable {
     }
 
     /**
+     * withdraw ERC20 tokens in case of accidentally transfer - owner only
+     */
+    function withdrawAllERC20(IERC20 erc20Token) external onlyOwner {
+        uint256 balance = erc20Token.balanceOf(address(this));
+        require(balance > 0, "Balance must be greater than 0");
+
+        token.transfer(owner(), balance);
+    }
+
+    /**
      * @dev Calculates the total Claimable Percent according to how many days have passed
      * @notice This function doesn't modify the contract state and it's just called for display purposes
      * @return The total Claimable Percent, accumulated Claimable Percent, claimable Percent Index
