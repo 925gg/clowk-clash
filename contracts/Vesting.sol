@@ -183,7 +183,7 @@ contract Vesting is IVesting, Ownable {
         uint256 balance = erc20Token.balanceOf(address(this));
         uint256 withdrawAmount = balance;
 
-        // only allow withdraw unassigned $SHIN
+        // only allow withdraw unassigned $CLASH
         if (erc20Token == token) {
             uint256 unreleased = _assigned - _released;
             require(balance > unreleased, "No available tokens");
