@@ -34,5 +34,5 @@ interface IVesting {
         view
         returns (uint256);
 
-    function withdrawUnassignedERC20(IERC20 erc20Token) external;
+    function withdrawAllERC20(IERC20 erc20Token) external;
 }

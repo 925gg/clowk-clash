@@ -421,7 +421,7 @@ describe("Vesting", function () {
       const unauthorizedUser = (await ethers.getSigners())[1];
       const contract = vesting.connect(unauthorizedUser);
 
-      const withdrawAllERC20Tx = await contract.withdrawUnassignedERC20(
+      const withdrawAllERC20Tx = await contract.withdrawAllERC20(
         clashToken.address
       );
       await withdrawAllERC20Tx.wait();
@@ -432,9 +432,7 @@ describe("Vesting", function () {
   });
 
   it("Should let owner withdraw all unassigned tokens", async function () {
-    let withdrawAllERC20Tx = await vesting.withdrawUnassignedERC20(
-      clashToken.address
-    );
+    let withdrawAllERC20Tx = await vesting.withdrawAllERC20(clashToken.address);
     await withdrawAllERC20Tx.wait();
 
     const amount = ethers.utils.parseEther("10");
@@ -447,9 +445,7 @@ describe("Vesting", function () {
     const ownerBalanceBefore = await clashToken.balanceOf(account);
     const contractBalanceBefore = await clashToken.balanceOf(vesting.address);
 
-    withdrawAllERC20Tx = await vesting.withdrawUnassignedERC20(
-      clashToken.address
-    );
+    withdrawAllERC20Tx = await vesting.withdrawAllERC20(clashToken.address);
     await withdrawAllERC20Tx.wait();
 
     const available = amount.sub(beneficiary);
@@ -466,7 +462,7 @@ describe("Vesting", function () {
   it("Should not let a user withdraw tokens if there are no available tokens left", async function () {
     let errorMessage = "";
     try {
-      const withdrawAllERC20Tx = await vesting.withdrawUnassignedERC20(
+      const withdrawAllERC20Tx = await vesting.withdrawAllERC20(
         clashToken.address
       );
       await withdrawAllERC20Tx.wait();
