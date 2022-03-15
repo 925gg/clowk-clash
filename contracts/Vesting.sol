@@ -181,17 +181,17 @@ contract Vesting is IVesting, Ownable {
      */
     function withdrawAllERC20(IERC20 erc20Token) external override onlyOwner {
         uint256 balance = erc20Token.balanceOf(address(this));
-        require(balance > 0, "Balance must be greater than 0");
-        uint256 withdrawAmount = balance;
 
         // only allow withdraw unassigned $CLASH
         if (erc20Token == token) {
             uint256 unreleased = _assigned - _released;
             require(balance > unreleased, "No available tokens");
-            withdrawAmount = balance - unreleased;
+            erc20Token.transfer(owner(), balance - unreleased);
+            return;
         }
 
-        token.transfer(owner(), withdrawAmount);
+        require(balance > 0, "Balance must be greater than 0");
+        erc20Token.transfer(owner(), balance);
     }
 
     /**

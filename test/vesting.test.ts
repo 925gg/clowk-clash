@@ -26,8 +26,8 @@ describe("Vesting", function () {
 
   let TOKEN_ADDRESS: string;
   let vesting: Vesting;
-  let vesting2: Vesting;
   let clashToken: ClashToken;
+  let secondClashToken: ClashToken;
   let account: string;
   const blockStartTimestamp = toSec(moment().add(1, "hour"));
 
@@ -402,7 +402,7 @@ describe("Vesting", function () {
     const vestingName = "Vesting 2";
     // We get the contract to deploy
     const VestingFactory = await ethers.getContractFactory("Vesting");
-    vesting2 = (await VestingFactory.deploy(
+    const vesting2 = (await VestingFactory.deploy(
       TOKEN_ADDRESS,
       start2,
       vestingName
@@ -460,19 +460,6 @@ describe("Vesting", function () {
     ).to.be.eq(true);
   });
 
-  it("Should not let a user withdraw tokens from a zero-balance", async function () {
-    let errorMessage = "";
-    try {
-      const withdrawAllERC20Tx = await vesting2.withdrawAllERC20(
-        clashToken.address
-      );
-      await withdrawAllERC20Tx.wait();
-    } catch (err: any) {
-      errorMessage = errorReason(err.message);
-    }
-    expect(errorMessage).to.eq("Balance must be greater than 0");
-  });
-
   it("Should not let a user withdraw tokens if there are no available tokens left", async function () {
     let errorMessage = "";
     const amount = ethers.utils.parseEther("10");
@@ -490,5 +477,45 @@ describe("Vesting", function () {
       errorMessage = errorReason(err.message);
     }
     expect(errorMessage).to.eq("No available tokens");
+  });
+
+  it("Should let user withdraw all non-CLASH ERC20 token", async function () {
+    const TokenFactory = await ethers.getContractFactory("ClashToken");
+    secondClashToken = (await TokenFactory.deploy(
+      "Chibi Clash",
+      "CLASH",
+      account
+    )) as ClashToken;
+
+    await secondClashToken.deployed();
+
+    const amount = ethers.utils.parseEther("10");
+    const mintTx = await secondClashToken.transfer(vesting.address, amount);
+    await mintTx.wait();
+    const ownerBalanceBefore = await secondClashToken.balanceOf(account);
+
+    const withdrawAllERC20Tx = await vesting.withdrawAllERC20(
+      secondClashToken.address
+    );
+    await withdrawAllERC20Tx.wait();
+
+    const ownerBalance = await secondClashToken.balanceOf(account);
+    const contractBalance = await secondClashToken.balanceOf(vesting.address);
+
+    expect(ownerBalance.sub(ownerBalanceBefore).eq(amount)).to.be.eq(true);
+    expect(contractBalance.eq(0)).to.be.eq(true);
+  });
+
+  it("Should not let a user withdraw tokens from a zero-balance", async function () {
+    let errorMessage = "";
+    try {
+      const withdrawAllERC20Tx = await vesting.withdrawAllERC20(
+        secondClashToken.address
+      );
+      await withdrawAllERC20Tx.wait();
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+    expect(errorMessage).to.eq("Balance must be greater than 0");
   });
 });
