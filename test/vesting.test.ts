@@ -26,6 +26,7 @@ describe("Vesting", function () {
 
   let TOKEN_ADDRESS: string;
   let vesting: Vesting;
+  let vesting2: Vesting;
   let clashToken: ClashToken;
   let account: string;
   const blockStartTimestamp = toSec(moment().add(1, "hour"));
@@ -401,7 +402,7 @@ describe("Vesting", function () {
     const vestingName = "Vesting 2";
     // We get the contract to deploy
     const VestingFactory = await ethers.getContractFactory("Vesting");
-    const vesting2 = (await VestingFactory.deploy(
+    vesting2 = (await VestingFactory.deploy(
       TOKEN_ADDRESS,
       start2,
       vestingName
@@ -459,8 +460,27 @@ describe("Vesting", function () {
     ).to.be.eq(true);
   });
 
+  it("Should not let a user withdraw tokens from a zero-balance", async function () {
+    let errorMessage = "";
+    try {
+      const withdrawAllERC20Tx = await vesting2.withdrawAllERC20(
+        clashToken.address
+      );
+      await withdrawAllERC20Tx.wait();
+    } catch (err: any) {
+      errorMessage = errorReason(err.message);
+    }
+    expect(errorMessage).to.eq("Balance must be greater than 0");
+  });
+
   it("Should not let a user withdraw tokens if there are no available tokens left", async function () {
     let errorMessage = "";
+    const amount = ethers.utils.parseEther("10");
+    const beneficiary = ethers.utils.parseEther("10");
+    const mintTx = await clashToken.transfer(vesting.address, amount);
+    await mintTx.wait();
+
+    await vesting.addBeneficiaries([account], [beneficiary]);
     try {
       const withdrawAllERC20Tx = await vesting.withdrawAllERC20(
         clashToken.address
