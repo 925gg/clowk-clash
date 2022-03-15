@@ -421,7 +421,7 @@ describe("Vesting", function () {
       const unauthorizedUser = (await ethers.getSigners())[1];
       const contract = vesting.connect(unauthorizedUser);
 
-      const withdrawAllERC20Tx = await contract.withdrawAllERC20(
+      const withdrawAllERC20Tx = await contract.withdrawUnassignedERC20(
         clashToken.address
       );
       await withdrawAllERC20Tx.wait();
@@ -431,38 +431,48 @@ describe("Vesting", function () {
     expect(errorMessage).to.eq("Ownable: caller is not the owner");
   });
 
-  it("Should let owner withdraw all tokens", async function () {
-    const mintTx = await clashToken.transfer(
-      vesting.address,
-      ethers.utils.parseEther("1")
-    );
-    await mintTx.wait();
-
-    let currentOwnerBalance = await clashToken.balanceOf(account);
-    let currentContractBalance = await clashToken.balanceOf(vesting.address);
-    const total = currentOwnerBalance.add(currentContractBalance);
-
-    const withdrawAllERC20Tx = await vesting.withdrawAllERC20(
+  it("Should let owner withdraw all unassigned tokens", async function () {
+    let withdrawAllERC20Tx = await vesting.withdrawUnassignedERC20(
       clashToken.address
     );
     await withdrawAllERC20Tx.wait();
 
-    currentOwnerBalance = await clashToken.balanceOf(account);
-    currentContractBalance = await clashToken.balanceOf(vesting.address);
-    expect(currentOwnerBalance.eq(total)).to.be.eq(true);
-    expect(currentContractBalance.toNumber()).to.eq(0);
+    const amount = ethers.utils.parseEther("10");
+    const beneficiary = ethers.utils.parseEther("4");
+    const mintTx = await clashToken.transfer(vesting.address, amount);
+    await mintTx.wait();
+
+    await vesting.addBeneficiaries([account], [beneficiary]);
+
+    const ownerBalanceBefore = await clashToken.balanceOf(account);
+    const contractBalanceBefore = await clashToken.balanceOf(vesting.address);
+
+    withdrawAllERC20Tx = await vesting.withdrawUnassignedERC20(
+      clashToken.address
+    );
+    await withdrawAllERC20Tx.wait();
+
+    const available = amount.sub(beneficiary);
+    const ownerBalanceAfter = await clashToken.balanceOf(account);
+    const contractBalanceAfter = await clashToken.balanceOf(vesting.address);
+    expect(ownerBalanceAfter.sub(ownerBalanceBefore).eq(available)).to.be.eq(
+      true
+    );
+    expect(
+      contractBalanceBefore.sub(contractBalanceAfter).eq(available)
+    ).to.be.eq(true);
   });
 
-  it("Should not let a user withdraw tokens if balance is 0", async function () {
+  it("Should not let a user withdraw tokens if there are no available tokens left", async function () {
     let errorMessage = "";
     try {
-      const withdrawAllERC20Tx = await vesting.withdrawAllERC20(
+      const withdrawAllERC20Tx = await vesting.withdrawUnassignedERC20(
         clashToken.address
       );
       await withdrawAllERC20Tx.wait();
     } catch (err: any) {
       errorMessage = errorReason(err.message);
     }
-    expect(errorMessage).to.eq("Balance must be greater than 0");
+    expect(errorMessage).to.eq("No available tokens");
   });
 });
