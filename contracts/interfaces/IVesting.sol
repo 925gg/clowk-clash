@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Unlicense
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 pragma solidity ^0.8.0;
 
 interface IVesting {
@@ -32,4 +33,6 @@ interface IVesting {
         external
         view
         returns (uint256);
+
+    function withdrawAllERC20(IERC20 erc20Token) external;
 }
