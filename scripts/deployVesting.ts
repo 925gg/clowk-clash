@@ -3,11 +3,11 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
 import { Vesting } from "../typechain-types";
 // eslint-disable-next-line node/no-missing-import
-import { availableConfigFiles, VestingSettings } from "../utils";
+import { sleep, availableConfigFiles, VestingSettings } from "../utils";
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -47,23 +47,22 @@ async function main() {
 
   console.log(`Unlock events added`);
 
-  // console.log('Unlock Events', await vesting.getUnlockEvents());
+  console.log("Unlock Events", await vesting.getUnlockEvents());
 
-  // console.log(`Pausing 3-4 blocks in order to verify Contract`);
-  // await sleep({seconds: 15 * 4});
-  // console.log(`Pause finished. Verifying Contract`);
+  console.log(`Pausing 3-4 blocks in order to verify Contract`);
+  await sleep({ seconds: 15 * 4 });
+  console.log(`Pause finished. Verifying Contract`);
 
-  // try {
-  //   await run("verify:verify", {
-  //     address: vesting.address,
-  //     constructorArguments: [TOKEN_ADDRESS, start, vestingName]
-  //   });
+  try {
+    await hre.run("verify:verify", {
+      address: vesting.address,
+      constructorArguments: [TOKEN_ADDRESS, start, vestingName],
+    });
 
-  //   console.log("Vesting deployed and verified to:", vesting.address);
-
-  // } catch (err) {
-  //   console.error('Error veryfing Contract. Reason:', err);
-  // }
+    console.log("Vesting deployed and verified to:", vesting.address);
+  } catch (err) {
+    console.error("Error verifying Contract. Reason:", err);
+  }
 
   console.log(`Contract deployed successfully`);
 }

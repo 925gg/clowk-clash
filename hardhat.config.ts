@@ -15,8 +15,17 @@ import "@nomiclabs/hardhat-waffle";
  * @type import('hardhat/config').HardhatUserConfig
  */
 
-const { INFURA_KEY, ETHERSCAN_API_KEY, PRIVATE_KEY, PRIVATE_KEY_TESTNET } =
-  process.env;
+const {
+  INFURA_KEY,
+  ETHERSCAN_API_KEY,
+  PRIVATE_KEY,
+  PRIVATE_KEY_TESTNET,
+  MUMBAI_RPC_URL,
+  MUMBAI_PRIVATE_KEY,
+  POLYGON_RPC_URL,
+  POLYGON_PRIVATE_KEY,
+  POLYGON_API_KEY,
+} = process.env;
 
 module.exports = {
   solidity: {
@@ -30,10 +39,9 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      // forking: {
-      //   url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
-      //   accounts: [PRIVATE_KEY_TESTNET],
-      // },
+      forking: {
+        url: POLYGON_RPC_URL,
+      },
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
@@ -51,8 +59,16 @@ module.exports = {
       url: `https://kovan.infura.io/v3/${INFURA_KEY}`,
       accounts: [PRIVATE_KEY_TESTNET],
     },
+    polygon: {
+      url: POLYGON_RPC_URL,
+      accounts: [POLYGON_PRIVATE_KEY],
+    },
+    mumbai: {
+      url: MUMBAI_RPC_URL,
+      accounts: [MUMBAI_PRIVATE_KEY],
+    },
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: POLYGON_API_KEY,
   },
 };
