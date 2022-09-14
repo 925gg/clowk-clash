@@ -24,7 +24,9 @@ const {
   MUMBAI_PRIVATE_KEY,
   POLYGON_RPC_URL,
   POLYGON_PRIVATE_KEY,
-  POLYGON_API_KEY,
+  GOERLI_RPC_URL,
+  GOERLI_PRIVATE_KEY,
+  RINKEBY_RPC_URL,
 } = process.env;
 
 module.exports = {
@@ -47,8 +49,12 @@ module.exports = {
       url: `https://mainnet.infura.io/v3/${INFURA_KEY}`,
       accounts: [PRIVATE_KEY],
     },
+    goerli: {
+      url: GOERLI_RPC_URL,
+      accounts: [GOERLI_PRIVATE_KEY],
+    },
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${INFURA_KEY}`,
+      url: RINKEBY_RPC_URL,
       accounts: [PRIVATE_KEY_TESTNET],
     },
     ropsten: {
@@ -69,6 +75,6 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: POLYGON_API_KEY,
+    apiKey: ETHERSCAN_API_KEY,
   },
 };
